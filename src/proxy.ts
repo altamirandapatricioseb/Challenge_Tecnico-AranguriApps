@@ -30,10 +30,10 @@ export async function proxy(request: NextRequest) {
   // Rutas públicas
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
 
-  if (!user && !isAuthRoute) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
+  // (preview): comentado para previsualizar sin auth. Se revierte al volver a main
+  // if (!user && !isAuthRoute) {
+  //   return NextResponse.redirect(new URL('/login', request.url))
+  // }
   if (user && isAuthRoute) {
     return NextResponse.redirect(new URL('/', request.url))
   }
