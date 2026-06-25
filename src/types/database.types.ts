@@ -230,6 +230,15 @@ export interface Database {
           stock_value:    number
         }
       }
+      admin_users_overview: {
+        Row: {
+          id:         string
+          email:      string | null
+          full_name:  string | null
+          role:       UserRole
+          created_at: string
+        }
+      }
     }
     Functions: {
       get_my_role: {
