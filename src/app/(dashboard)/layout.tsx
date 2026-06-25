@@ -1,13 +1,23 @@
+import { redirect } from 'next/navigation'
 import { DashboardShell } from '@/components/app/layout/DashboardShell'
- 
-// usuario simulado para previsualizar la UI sin autenticación este layout pasa a ser async y obtiene el usuario real con getUser().
-const MOCK_USER = {
-  name: 'Patricio Altamiranda',
-  email: 'patricio@test.app',
-  role: 'admin' as const,
+import { getProfile } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  const profile = await getProfile()
+
+  const sidebarUser = {
+    name: profile?.full_name || user.email?.split('@')[0] || 'Usuario',
+    email: user.email ?? '',
+    role: profile?.role ?? 'viewer',
+  }
+
+  return <DashboardShell user={sidebarUser}>{children}</DashboardShell>
 }
- 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell user={MOCK_USER}>{children}</DashboardShell>
-}
- 
