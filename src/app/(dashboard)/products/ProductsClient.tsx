@@ -13,13 +13,17 @@ import { Input } from '@/components/ui/input'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
-import { createProduct, updateProduct } from '@/server/actions/products'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { createProduct, updateProduct, deleteProduct } from '@/server/actions/products'
 import { createMovement } from '@/server/actions/movements'
 import { formatCurrency } from '@/lib/format.utils'
 import { getStockStatus } from '@/lib/stock.utils'
 import type { ProductFormValues } from '@/lib/validations/product'
 import type { MovementFormValues } from '@/lib/validations/movement'
-import { Package, Pencil, ArrowLeftRight, Search } from 'lucide-react'
+import { Package, Pencil, ArrowLeftRight, Search, Trash2 } from 'lucide-react'
 import type { Category, ProductWithDetails, Supplier, StockStatus } from '@/types'
 
 interface ProductsClientProps {
@@ -27,17 +31,19 @@ interface ProductsClientProps {
   categories: Category[]
   suppliers: Supplier[]
   canWrite: boolean
+  canDelete: boolean
 }
 
 // Peso numerico de cada estado para ordenar: critico primero, ok ultimo
 const STATUS_RANK: Record<StockStatus, number> = { critical: 0, low: 1, ok: 2 }
 
-export function ProductsClient({ products, categories, suppliers, canWrite }: ProductsClientProps) {
+export function ProductsClient({ products, categories, suppliers, canWrite, canDelete }: ProductsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<ProductWithDetails | null>(null)
   const [movementFor, setMovementFor] = useState<ProductWithDetails | null>(null)
+  const [deleting, setDeleting] = useState<ProductWithDetails | null>(null)
 
   // Filtro de busqueda en memoria por nombre o sku
   const filtered = products.filter((p) => {
@@ -86,6 +92,20 @@ export function ProductsClient({ products, categories, suppliers, canWrite }: Pr
     })
   }
 
+  function handleDelete() {
+    if (!deleting) return
+    startTransition(async () => {
+      const result = await deleteProduct(deleting.id!)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success('Producto eliminado.')
+        setDeleting(null)
+        router.refresh()
+      }
+    })
+  }
+
   const columns: Column<ProductWithDetails>[] = [
     { key: 'sku', header: 'SKU', sortValue: (p) => p.sku ?? '', cell: (p) => <span className="font-data text-slate-500">{p.sku || '—'}</span> },
     { key: 'name', header: 'Producto', sortValue: (p) => p.name ?? '', cell: (p) => <span className="font-medium text-slate-900">{p.name}</span> },
@@ -108,18 +128,27 @@ export function ProductsClient({ products, categories, suppliers, canWrite }: Pr
     { key: 'supplier', header: 'Proveedor', sortValue: (p) => p.supplier_name ?? '', cell: (p) => <span className="text-slate-600">{p.supplier_name || '—'}</span> },
   ]
 
-  // La columna de acciones solo se agrega si el usuario puede escribir
-  if (canWrite) {
+  // Columna de acciones segun permisos
+  if (canWrite || canDelete) {
     columns.push({
       key: 'actions', header: '', align: 'right',
       cell: (p) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setMovementFor(p)} title="Registrar movimiento">
-            <ArrowLeftRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setEditing(p)} title="Editar">
-            <Pencil className="h-4 w-4" />
-          </Button>
+          {canWrite && (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setMovementFor(p)} title="Registrar movimiento">
+                <ArrowLeftRight className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setEditing(p)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          {canDelete && (
+            <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} title="Eliminar" className="text-red-600 hover:text-red-700">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       ),
     })
@@ -132,7 +161,6 @@ export function ProductsClient({ products, categories, suppliers, canWrite }: Pr
           <h2 className="text-xl font-semibold text-slate-900">Productos</h2>
           <p className="text-sm text-slate-500">Catálogo de productos del inventario.</p>
         </div>
-        {/* Boton de crear solo para roles con permiso de escritura */}
         {canWrite && (
           <FormSheet title="Nuevo producto" triggerLabel="Nuevo producto" triggerIcon={Package}>
             {(close) => (
@@ -167,7 +195,7 @@ export function ProductsClient({ products, categories, suppliers, canWrite }: Pr
         emptyDescription="Agregá tu primer producto al inventario."
       />
 
-      {/* Sheets solo se renderizan si puede escribir (no se abren para viewer) */}
+      {/* Sheets de crear/editar y movimiento: solo si puede escribir */}
       {canWrite && (
         <>
           <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
@@ -212,6 +240,27 @@ export function ProductsClient({ products, categories, suppliers, canWrite }: Pr
             </SheetContent>
           </Sheet>
         </>
+      )}
+
+      {/* Diálogo de confirmación de borrado: solo admin */}
+      {canDelete && (
+        <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vas a eliminar &quot;{deleting?.name}&quot;. El producto dejará de listarse pero su
+                historial de movimientos se conserva. Esta acción se puede revertir recreándolo con el mismo SKU.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-red-600 hover:bg-red-700">
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </>
   )

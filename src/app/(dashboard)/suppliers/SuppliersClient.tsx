@@ -8,20 +8,26 @@ import { FormSheet } from '@/components/app/FormSheet'
 import { SupplierForm } from '@/components/app/forms/SupplierForm'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { createSupplier, updateSupplier } from '@/server/actions/suppliers'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { createSupplier, updateSupplier, deleteSupplier } from '@/server/actions/suppliers'
 import type { SupplierFormValues } from '@/lib/validations/supplier'
-import { Truck, Pencil } from 'lucide-react'
+import { Truck, Pencil, Trash2 } from 'lucide-react'
 import type { Supplier } from '@/types'
 
 interface SuppliersClientProps {
   suppliers: Supplier[]
   canWrite: boolean
+  canDelete: boolean
 }
 
-export function SuppliersClient({ suppliers, canWrite }: SuppliersClientProps) {
+export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editing, setEditing] = useState<Supplier | null>(null)
+  const [deleting, setDeleting] = useState<Supplier | null>(null)
 
   async function handleCreate(values: SupplierFormValues, close: () => void) {
     startTransition(async () => {
@@ -50,6 +56,20 @@ export function SuppliersClient({ suppliers, canWrite }: SuppliersClientProps) {
     })
   }
 
+  function handleDelete() {
+    if (!deleting) return
+    startTransition(async () => {
+      const result = await deleteSupplier(deleting.id)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success('Proveedor eliminado.')
+        setDeleting(null)
+        router.refresh()
+      }
+    })
+  }
+
   const columns: Column<Supplier>[] = [
     { key: 'name', header: 'Nombre', sortValue: (s) => s.name, cell: (s) => <span className="font-medium text-slate-900">{s.name}</span> },
     { key: 'contact', header: 'Contacto', sortValue: (s) => s.contact_name ?? '', cell: (s) => <span className="text-slate-600">{s.contact_name || '—'}</span> },
@@ -57,14 +77,22 @@ export function SuppliersClient({ suppliers, canWrite }: SuppliersClientProps) {
     { key: 'phone', header: 'Teléfono', sortValue: (s) => s.phone ?? '', cell: (s) => <span className="font-data text-slate-600">{s.phone || '—'}</span> },
   ]
 
-  // Columna de acciones solo si puede escribir
-  if (canWrite) {
+  if (canWrite || canDelete) {
     columns.push({
       key: 'actions', header: '', align: 'right',
       cell: (s) => (
-        <Button variant="ghost" size="sm" onClick={() => setEditing(s)}>
-          <Pencil className="h-4 w-4" />
-        </Button>
+        <div className="flex justify-end gap-1">
+          {canWrite && (
+            <Button variant="ghost" size="sm" onClick={() => setEditing(s)} title="Editar">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button variant="ghost" size="sm" onClick={() => setDeleting(s)} title="Eliminar" className="text-red-600 hover:text-red-700">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       ),
     })
   }
@@ -95,6 +123,7 @@ export function SuppliersClient({ suppliers, canWrite }: SuppliersClientProps) {
         emptyDescription="Agregá tu primer proveedor para asociarlo a productos."
       />
 
+      {/* Sheet de edición: solo si puede escribir */}
       {canWrite && (
         <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
           <SheetContent className="w-full overflow-y-auto sm:max-w-md">
@@ -119,6 +148,27 @@ export function SuppliersClient({ suppliers, canWrite }: SuppliersClientProps) {
             </div>
           </SheetContent>
         </Sheet>
+      )}
+
+      {/* Diálogo de confirmación de borrado: solo admin */}
+      {canDelete && (
+        <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vas a eliminar &quot;{deleting?.name}&quot;. El proveedor dejará de listarse pero los
+                productos asociados se conservan. Esta acción se puede revertir recreándolo con el mismo nombre.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-red-600 hover:bg-red-700">
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </>
   )

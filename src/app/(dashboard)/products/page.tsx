@@ -6,7 +6,6 @@ import { canWrite } from '@/lib/permissions'
 import { ProductsClient } from './ProductsClient'
 
 export default async function ProductsPage() {
-  // Traemos datos y rol en paralelo
   const [products, categories, suppliers, role] = await Promise.all([
     getProducts(),
     getCategories(),
@@ -21,6 +20,7 @@ export default async function ProductsPage() {
         categories={categories}
         suppliers={suppliers}
         canWrite={canWrite(role)}
+        canDelete={role === 'admin'} // eliminar solo admin
       />
     </div>
   )

@@ -22,7 +22,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
   return data ?? []
 }
 
-// Crea un proveedor nuevo
+// Crea un proveedor. Si existe uno inactivo con el mismo nombre lo reactiva
 export async function createSupplier(formData: unknown): Promise<ActionResult<Supplier>> {
   await requireRole('manager')
 
@@ -39,6 +39,32 @@ export async function createSupplier(formData: unknown): Promise<ActionResult<Su
     phone: parsed.data.phone || null,
     address: parsed.data.address || null,
     notes: parsed.data.notes || null,
+  }
+
+  // Buscamos un proveedor existente (activo o no) con ese nombre, case-insensitive
+  const { data: existing } = await supabase
+    .from('suppliers')
+    .select('id, is_active')
+    .ilike('name', payload.name)
+    .maybeSingle()
+
+  if (existing) {
+    if (existing.is_active) {
+      return { data: null, error: 'Ya existe un proveedor con ese nombre.' }
+    }
+    // Existe inactivo: lo reactivamos con los datos nuevos
+    const { data, error } = await supabase
+      .from('suppliers')
+      .update({ ...payload, is_active: true })
+      .eq('id', existing.id)
+      .select()
+      .single()
+
+    if (error) {
+      return { data: null, error: 'No se pudo crear el proveedor.' }
+    }
+    revalidatePath('/suppliers')
+    return { data, error: null }
   }
 
   const { data, error } = await supabase
@@ -87,4 +113,22 @@ export async function updateSupplier(id: string, formData: unknown): Promise<Act
 
   revalidatePath('/suppliers')
   return { data, error: null }
+}
+
+// Soft delete: marca el proveedor como inactivo. Solo admin
+export async function deleteSupplier(id: string): Promise<ActionResult> {
+  await requireRole('admin')
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('suppliers')
+    .update({ is_active: false })
+    .eq('id', id)
+
+  if (error) {
+    return { data: null, error: 'No se pudo eliminar el proveedor.' }
+  }
+
+  revalidatePath('/suppliers')
+  return { data: null, error: null }
 }

@@ -11,7 +11,11 @@ export default async function SuppliersPage() {
 
   return (
     <div className="space-y-6">
-      <SuppliersClient suppliers={suppliers} canWrite={canWrite(role)} />
+      <SuppliersClient
+        suppliers={suppliers}
+        canWrite={canWrite(role)}
+        canDelete={role === 'admin'} // eliminar solo admin
+      />
     </div>
   )
 }

@@ -27,7 +27,6 @@ export async function getProducts(filters?: ProductFilters): Promise<ProductWith
     query = query.eq('category_id', filters.categoryId)
   }
   if (filters?.search) {
-    // Busca por nombre o sku 
     query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`)
   }
 
@@ -40,8 +39,7 @@ export async function getProducts(filters?: ProductFilters): Promise<ProductWith
   let result = data ?? []
   // El filtro de stock bajo se aplica en memoria porque compara dos columnas
   if (filters?.lowStock) {
-    // Los campos de la vista pueden ser null; tratamos null como 0 para comparar
-     result = result.filter((p) => (p.current_stock ?? 0) <= (p.min_stock ?? 0))
+    result = result.filter((p) => (p.current_stock ?? 0) <= (p.min_stock ?? 0))
   }
   return result
 }
@@ -62,7 +60,7 @@ export async function getProductById(id: string): Promise<ProductWithDetails | n
   return data
 }
 
-// Crea un producto nuevo. Valida con Zod y exige rol manager o superior
+// Crea un producto. Si existe uno inactivo con el mismo SKU lo reactiva en vez de insertar
 export async function createProduct(formData: unknown): Promise<ActionResult<Product>> {
   await requireRole('manager')
 
@@ -72,13 +70,40 @@ export async function createProduct(formData: unknown): Promise<ActionResult<Pro
   }
 
   const supabase = await createClient()
-  // Los campos opcionales vacios se convierten a null para la DB
   const payload = {
     ...parsed.data,
     sku: parsed.data.sku || null,
     description: parsed.data.description || null,
     category_id: parsed.data.category_id || null,
     supplier_id: parsed.data.supplier_id || null,
+  }
+
+  // Si tiene SKU, buscamos un producto existente (activo o no) con ese SKU
+  if (payload.sku) {
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id, is_active')
+      .ilike('sku', payload.sku)
+      .maybeSingle()
+
+    if (existing) {
+      if (existing.is_active) {
+        return { data: null, error: 'Ya existe un producto con ese SKU.' }
+      }
+      // Existe inactivo: lo reactivamos con los datos nuevos
+      const { data, error } = await supabase
+        .from('products')
+        .update({ ...payload, is_active: true })
+        .eq('id', existing.id)
+        .select()
+        .single()
+
+      if (error) {
+        return { data: null, error: 'No se pudo crear el producto.' }
+      }
+      revalidatePath('/products')
+      return { data, error: null }
+    }
   }
 
   const { data, error } = await supabase
@@ -88,7 +113,6 @@ export async function createProduct(formData: unknown): Promise<ActionResult<Pro
     .single()
 
   if (error) {
-    // Codigo 23505 = violacion de unique (sku duplicado)
     if (error.code === '23505') {
       return { data: null, error: 'Ya existe un producto con ese SKU.' }
     }
@@ -136,9 +160,9 @@ export async function updateProduct(id: string, formData: unknown): Promise<Acti
   return { data, error: null }
 }
 
-// Soft delete: marca el producto como inactivo en vez de borrarlo
-export async function deactivateProduct(id: string): Promise<ActionResult> {
-  await requireRole('manager')
+// Soft delete: marca el producto como inactivo. Solo admin
+export async function deleteProduct(id: string): Promise<ActionResult> {
+  await requireRole('admin')
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -147,7 +171,7 @@ export async function deactivateProduct(id: string): Promise<ActionResult> {
     .eq('id', id)
 
   if (error) {
-    return { data: null, error: 'No se pudo desactivar el producto.' }
+    return { data: null, error: 'No se pudo eliminar el producto.' }
   }
 
   revalidatePath('/products')
