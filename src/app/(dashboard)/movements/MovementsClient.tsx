@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import ExcelJS from 'exceljs'
 import { DataTable, type Column } from '@/components/app/DataTable'
 import { FormSheet } from '@/components/app/FormSheet'
 import { MovementForm } from '@/components/app/forms/MovementForm'
@@ -21,6 +22,13 @@ interface MovementsClientProps {
   movements: MovementWithProduct[]
   products: ProductWithDetails[]
   canWrite: boolean
+}
+
+// Etiquetas legibles de cada tipo para el Excel
+const TYPE_LABELS: Record<MovementType, string> = {
+  entry: 'Entrada',
+  exit: 'Salida',
+  adjustment: 'Ajuste',
 }
 
 export function MovementsClient({ movements, products, canWrite }: MovementsClientProps) {
@@ -44,27 +52,71 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
     })
   }
 
-  // Exporta los movimientos filtrados a CSV, generado en el cliente
-  function exportCSV() {
-    const headers = ['Fecha', 'Producto', 'SKU', 'Tipo', 'Cantidad', 'Motivo', 'Referencia']
-    const rows = filtered.map((m) => [
-      m.created_at ? formatDateTime(m.created_at) : '',
-      m.product_name,
-      m.product_sku ?? '',
-      m.movement_type,
-      m.quantity,
-      m.reason ?? '',
-      m.reference_number ?? '',
-    ])
-    const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      .join('\n')
+  // Exporta los movimientos filtrados a un Excel con formato (tonos de azul)
+  async function exportExcel() {
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'InventFlow'
+    workbook.created = new Date()
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const sheet = workbook.addWorksheet('Movimientos', {
+      views: [{ state: 'frozen', ySplit: 1 }], // congela la fila de encabezado
+    })
+
+    // Definicion de columnas con ancho
+    sheet.columns = [
+      { header: 'Fecha', key: 'date', width: 22 },
+      { header: 'Producto', key: 'product', width: 32 },
+      { header: 'SKU', key: 'sku', width: 14 },
+      { header: 'Tipo', key: 'type', width: 12 },
+      { header: 'Cantidad', key: 'quantity', width: 12 },
+      { header: 'Motivo', key: 'reason', width: 28 },
+      { header: 'Referencia', key: 'reference', width: 18 },
+    ]
+
+    // Estilo del encabezado: fondo azul oscuro, texto blanco, negrita
+    const headerRow = sheet.getRow(1)
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 }
+      cell.alignment = { vertical: 'middle', horizontal: 'left' }
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FF1E40AF' } } }
+    }
+    )
+    headerRow.height = 22
+
+    // Filas de datos
+    filtered.forEach((m, i) => {
+      const row = sheet.addRow({
+        date: m.created_at ? formatDateTime(m.created_at) : '',
+        product: m.product_name,
+        sku: m.product_sku ?? '',
+        type: TYPE_LABELS[m.movement_type],
+        quantity: m.quantity,
+        reason: m.reason ?? '',
+        reference: m.reference_number ?? '',
+      })
+
+      // Zebra striping: filas pares con un azul muy claro
+      if (i % 2 === 1) {
+        row.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } }
+        })
+      }
+
+      // Centramos la cantidad y el tipo
+      row.getCell('quantity').alignment = { horizontal: 'center' }
+      row.getCell('type').alignment = { horizontal: 'center' }
+    })
+
+    // Genera el archivo y dispara la descarga
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `movimientos_${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `movimientos_${new Date().toISOString().split('T')[0]}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -93,7 +145,6 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
           <h2 className="text-xl font-semibold text-slate-900">Movimientos</h2>
           <p className="text-sm text-slate-500">Historial de entradas, salidas y ajustes de stock.</p>
         </div>
-        {/* Boton de registrar solo para roles con permiso de escritura */}
         {canWrite && (
           <FormSheet title="Registrar movimiento" triggerLabel="Registrar movimiento" triggerIcon={ArrowLeftRight}>
             {(close) => (
@@ -116,9 +167,9 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
           </SelectContent>
         </Select>
 
-        <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}>
+        <Button variant="outline" size="sm" onClick={exportExcel} disabled={filtered.length === 0}>
           <Download className="mr-2 h-4 w-4" />
-          Exportar CSV
+          Exportar Excel
         </Button>
       </div>
 
