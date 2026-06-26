@@ -20,9 +20,10 @@ import type { MovementType, MovementWithProduct, ProductWithDetails } from '@/ty
 interface MovementsClientProps {
   movements: MovementWithProduct[]
   products: ProductWithDetails[]
+  canWrite: boolean
 }
 
-export function MovementsClient({ movements, products }: MovementsClientProps) {
+export function MovementsClient({ movements, products, canWrite }: MovementsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [typeFilter, setTypeFilter] = useState<MovementType | 'all'>('all')
@@ -92,11 +93,14 @@ export function MovementsClient({ movements, products }: MovementsClientProps) {
           <h2 className="text-xl font-semibold text-slate-900">Movimientos</h2>
           <p className="text-sm text-slate-500">Historial de entradas, salidas y ajustes de stock.</p>
         </div>
-        <FormSheet title="Registrar movimiento" triggerLabel="Registrar movimiento" triggerIcon={ArrowLeftRight}>
-          {(close) => (
-            <MovementForm products={products} onSubmit={(v) => handleCreate(v, close)} isLoading={isPending} />
-          )}
-        </FormSheet>
+        {/* Boton de registrar solo para roles con permiso de escritura */}
+        {canWrite && (
+          <FormSheet title="Registrar movimiento" triggerLabel="Registrar movimiento" triggerIcon={ArrowLeftRight}>
+            {(close) => (
+              <MovementForm products={products} onSubmit={(v) => handleCreate(v, close)} isLoading={isPending} />
+            )}
+          </FormSheet>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

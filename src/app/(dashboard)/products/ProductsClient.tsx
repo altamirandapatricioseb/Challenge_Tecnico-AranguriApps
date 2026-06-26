@@ -26,12 +26,13 @@ interface ProductsClientProps {
   products: ProductWithDetails[]
   categories: Category[]
   suppliers: Supplier[]
+  canWrite: boolean
 }
 
 // Peso numerico de cada estado para ordenar: critico primero, ok ultimo
 const STATUS_RANK: Record<StockStatus, number> = { critical: 0, low: 1, ok: 2 }
 
-export function ProductsClient({ products, categories, suppliers }: ProductsClientProps) {
+export function ProductsClient({ products, categories, suppliers, canWrite }: ProductsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState('')
@@ -100,14 +101,16 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
     { key: 'stock', header: 'Stock', align: 'right', sortValue: (p) => p.current_stock ?? 0, cell: (p) => <span className="font-data">{p.current_stock} {p.unit}</span> },
     {
       key: 'status', header: 'Estado',
-      // Ordena por el estado calculado (critico->bajo->ok), no por el stock crudo,
-      // porque el estado depende de la relacion current_stock vs min_stock
       sortValue: (p) => STATUS_RANK[getStockStatus(p.current_stock ?? 0, p.min_stock ?? 0)],
       cell: (p) => <StockBadge currentStock={p.current_stock ?? 0} minStock={p.min_stock ?? 0} />,
     },
     { key: 'price', header: 'Precio', align: 'right', sortValue: (p) => p.unit_price ?? 0, cell: (p) => <span className="font-data">{formatCurrency(p.unit_price ?? 0)}</span> },
     { key: 'supplier', header: 'Proveedor', sortValue: (p) => p.supplier_name ?? '', cell: (p) => <span className="text-slate-600">{p.supplier_name || '—'}</span> },
-    {
+  ]
+
+  // La columna de acciones solo se agrega si el usuario puede escribir
+  if (canWrite) {
+    columns.push({
       key: 'actions', header: '', align: 'right',
       cell: (p) => (
         <div className="flex justify-end gap-1">
@@ -119,8 +122,8 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
           </Button>
         </div>
       ),
-    },
-  ]
+    })
+  }
 
   return (
     <>
@@ -129,16 +132,19 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
           <h2 className="text-xl font-semibold text-slate-900">Productos</h2>
           <p className="text-sm text-slate-500">Catálogo de productos del inventario.</p>
         </div>
-        <FormSheet title="Nuevo producto" triggerLabel="Nuevo producto" triggerIcon={Package}>
-          {(close) => (
-            <ProductForm
-              categories={categories}
-              suppliers={suppliers}
-              onSubmit={(v) => handleCreate(v, close)}
-              isLoading={isPending}
-            />
-          )}
-        </FormSheet>
+        {/* Boton de crear solo para roles con permiso de escritura */}
+        {canWrite && (
+          <FormSheet title="Nuevo producto" triggerLabel="Nuevo producto" triggerIcon={Package}>
+            {(close) => (
+              <ProductForm
+                categories={categories}
+                suppliers={suppliers}
+                onSubmit={(v) => handleCreate(v, close)}
+                isLoading={isPending}
+              />
+            )}
+          </FormSheet>
+        )}
       </div>
 
       <div className="relative max-w-sm">
@@ -161,49 +167,52 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
         emptyDescription="Agregá tu primer producto al inventario."
       />
 
-      {/* Sheet de edición */}
-      <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader><SheetTitle>Editar producto</SheetTitle></SheetHeader>
-          <div className="mt-6 px-4">
-            {editing && (
-              <ProductForm
-                categories={categories}
-                suppliers={suppliers}
-                defaultValues={{
-                  name: editing.name ?? '',
-                  sku: editing.sku ?? '',
-                  description: editing.description ?? '',
-                  category_id: editing.category_id ?? '',
-                  supplier_id: editing.supplier_id ?? '',
-                  unit_price: editing.unit_price ?? 0,
-                  min_stock: editing.min_stock ?? 0,
-                  unit: editing.unit ?? 'unidad',
-                }}
-                onSubmit={handleUpdate}
-                isLoading={isPending}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Sheets solo se renderizan si puede escribir (no se abren para viewer) */}
+      {canWrite && (
+        <>
+          <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+            <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+              <SheetHeader><SheetTitle>Editar producto</SheetTitle></SheetHeader>
+              <div className="mt-6 px-4">
+                {editing && (
+                  <ProductForm
+                    categories={categories}
+                    suppliers={suppliers}
+                    defaultValues={{
+                      name: editing.name ?? '',
+                      sku: editing.sku ?? '',
+                      description: editing.description ?? '',
+                      category_id: editing.category_id ?? '',
+                      supplier_id: editing.supplier_id ?? '',
+                      unit_price: editing.unit_price ?? 0,
+                      min_stock: editing.min_stock ?? 0,
+                      unit: editing.unit ?? 'unidad',
+                    }}
+                    onSubmit={handleUpdate}
+                    isLoading={isPending}
+                  />
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
 
-      {/* Sheet de movimiento rápido, pre-cargado con el producto */}
-      <Sheet open={!!movementFor} onOpenChange={(o) => !o && setMovementFor(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader><SheetTitle>Registrar movimiento</SheetTitle></SheetHeader>
-          <div className="mt-6 px-4">
-            {movementFor && (
-              <MovementForm
-                products={products}
-                defaultValues={{ product_id: movementFor.id ?? '' }}
-                onSubmit={handleMovement}
-                isLoading={isPending}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+          <Sheet open={!!movementFor} onOpenChange={(o) => !o && setMovementFor(null)}>
+            <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+              <SheetHeader><SheetTitle>Registrar movimiento</SheetTitle></SheetHeader>
+              <div className="mt-6 px-4">
+                {movementFor && (
+                  <MovementForm
+                    products={products}
+                    defaultValues={{ product_id: movementFor.id ?? '' }}
+                    onSubmit={handleMovement}
+                    isLoading={isPending}
+                  />
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
+      )}
     </>
   )
 }

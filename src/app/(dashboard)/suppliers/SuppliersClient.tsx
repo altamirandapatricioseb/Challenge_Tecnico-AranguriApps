@@ -15,9 +15,10 @@ import type { Supplier } from '@/types'
 
 interface SuppliersClientProps {
   suppliers: Supplier[]
+  canWrite: boolean
 }
 
-export function SuppliersClient({ suppliers }: SuppliersClientProps) {
+export function SuppliersClient({ suppliers, canWrite }: SuppliersClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editing, setEditing] = useState<Supplier | null>(null)
@@ -54,15 +55,19 @@ export function SuppliersClient({ suppliers }: SuppliersClientProps) {
     { key: 'contact', header: 'Contacto', sortValue: (s) => s.contact_name ?? '', cell: (s) => <span className="text-slate-600">{s.contact_name || '—'}</span> },
     { key: 'email', header: 'Email', sortValue: (s) => s.email ?? '', cell: (s) => <span className="font-data text-slate-600">{s.email || '—'}</span> },
     { key: 'phone', header: 'Teléfono', sortValue: (s) => s.phone ?? '', cell: (s) => <span className="font-data text-slate-600">{s.phone || '—'}</span> },
-    {
+  ]
+
+  // Columna de acciones solo si puede escribir
+  if (canWrite) {
+    columns.push({
       key: 'actions', header: '', align: 'right',
       cell: (s) => (
         <Button variant="ghost" size="sm" onClick={() => setEditing(s)}>
           <Pencil className="h-4 w-4" />
         </Button>
       ),
-    },
-  ]
+    })
+  }
 
   return (
     <>
@@ -71,11 +76,13 @@ export function SuppliersClient({ suppliers }: SuppliersClientProps) {
           <h2 className="text-xl font-semibold text-slate-900">Proveedores</h2>
           <p className="text-sm text-slate-500">Gestioná los proveedores del inventario.</p>
         </div>
-        <FormSheet title="Nuevo proveedor" triggerLabel="Nuevo proveedor" triggerIcon={Truck}>
-          {(close) => (
-            <SupplierForm onSubmit={(v) => handleCreate(v, close)} isLoading={isPending} />
-          )}
-        </FormSheet>
+        {canWrite && (
+          <FormSheet title="Nuevo proveedor" triggerLabel="Nuevo proveedor" triggerIcon={Truck}>
+            {(close) => (
+              <SupplierForm onSubmit={(v) => handleCreate(v, close)} isLoading={isPending} />
+            )}
+          </FormSheet>
+        )}
       </div>
 
       <DataTable
@@ -88,30 +95,31 @@ export function SuppliersClient({ suppliers }: SuppliersClientProps) {
         emptyDescription="Agregá tu primer proveedor para asociarlo a productos."
       />
 
-      {/* Sheet de edición */}
-      <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Editar proveedor</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 px-4">
-            {editing && (
-              <SupplierForm
-                defaultValues={{
-                  name: editing.name,
-                  contact_name: editing.contact_name ?? '',
-                  email: editing.email ?? '',
-                  phone: editing.phone ?? '',
-                  address: editing.address ?? '',
-                  notes: editing.notes ?? '',
-                }}
-                onSubmit={handleUpdate}
-                isLoading={isPending}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {canWrite && (
+        <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+          <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Editar proveedor</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6 px-4">
+              {editing && (
+                <SupplierForm
+                  defaultValues={{
+                    name: editing.name,
+                    contact_name: editing.contact_name ?? '',
+                    email: editing.email ?? '',
+                    phone: editing.phone ?? '',
+                    address: editing.address ?? '',
+                    notes: editing.notes ?? '',
+                  }}
+                  onSubmit={handleUpdate}
+                  isLoading={isPending}
+                />
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </>
   )
 }
