@@ -8,12 +8,18 @@ const CONFIG: Record<MovementType, { label: string; Icon: LucideIcon; className:
   adjustment: { label: 'Ajuste',  Icon: SlidersHorizontal, className: 'bg-blue-50 text-blue-700 ring-blue-200' },
 }
 
-// Acepta null/undefined para tolerar los campos nullable de las vistas
-interface MovementTypeBadgeProps { type: MovementType | null | undefined; className?: string }
+// Acepta string generico (como lo tipan las vistas) o null/undefined.
+// Valida internamente que sea un MovementType conocido antes de renderizar
+interface MovementTypeBadgeProps { type: string | null | undefined; className?: string }
+
+// Type guard: confirma que un string sea uno de los tipos validos
+function isMovementType(value: string): value is MovementType {
+  return value === 'entry' || value === 'exit' || value === 'adjustment'
+}
 
 export function MovementTypeBadge({ type, className }: MovementTypeBadgeProps) {
-  // Si no hay tipo valido, no renderizamos el badge
-  if (!type || !CONFIG[type]) {
+  // Si no hay tipo o no es uno valido, mostramos un guion
+  if (!type || !isMovementType(type)) {
     return <span className="text-slate-400">—</span>
   }
 
