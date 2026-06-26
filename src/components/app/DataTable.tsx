@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from './EmptyState'
 import { cn } from '@/lib/cn'
-import { ChevronLeft, ChevronRight, Inbox, type LucideIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown, Inbox, type LucideIcon } from 'lucide-react'
 
 export interface Column<T> {
   key: string
@@ -17,6 +17,8 @@ export interface Column<T> {
   align?: 'left' | 'right' | 'center'
   headerClassName?: string
   cellClassName?: string
+  // Valor por el que ordenar esta columna. Si no se define, la columna no es ordenable.
+  sortValue?: (row: T) => string | number
 }
 
 interface DataTableProps<T> {
@@ -33,15 +35,56 @@ interface DataTableProps<T> {
 
 const alignClass = { left: 'text-left', right: 'text-right', center: 'text-center' } as const
 
+// Estados de orden: null (original) -> asc -> desc -> null
+type SortDir = 'asc' | 'desc' | null
+
 export function DataTable<T>({
   columns, data, rowKey, isLoading = false, pageSize = 10, onRowClick,
   emptyIcon = Inbox, emptyTitle = 'Sin datos', emptyDescription = 'No hay registros para mostrar.',
 }: DataTableProps<T>) {
   const [page, setPage] = useState(0)
-  const totalPages = Math.max(1, Math.ceil(data.length / pageSize))
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<SortDir>(null)
+
+  // Maneja el ciclo de orden al clickear un header: asc -> desc -> original
+  function handleSort(col: Column<T>) {
+    if (!col.sortValue) return // columna no ordenable
+    if (sortKey !== col.key) {
+      setSortKey(col.key)
+      setSortDir('asc')
+    } else if (sortDir === 'asc') {
+      setSortDir('desc')
+    } else if (sortDir === 'desc') {
+      setSortKey(null)
+      setSortDir(null)
+    } else {
+      setSortDir('asc')
+    }
+    setPage(0) // al reordenar volvemos a la primera pagina
+  }
+
+  // Aplica el orden actual sobre los datos; si no hay orden, respeta el original
+  const sortedData = useMemo(() => {
+    if (!sortKey || !sortDir) return data
+    const col = columns.find((c) => c.key === sortKey)
+    if (!col?.sortValue) return data
+
+    // Multiplicamos el comparador por la direccion en vez de reversear:
+    // asi el orden desc tambien es estable (no rompe el orden de los empates)
+    const dir = sortDir === 'desc' ? -1 : 1
+    const sorted = [...data].sort((a, b) => {
+      const va = col.sortValue!(a)
+      const vb = col.sortValue!(b)
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir
+      return String(va).localeCompare(String(vb), 'es', { numeric: true }) * dir
+    })
+    return sorted
+  }, [data, sortKey, sortDir, columns])
+
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)
   const start = safePage * pageSize
-  const pageData = data.slice(start, start + pageSize)
+  const pageData = sortedData.slice(start, start + pageSize)
 
   // Loading: esqueleto con la misma estructura de columnas
   if (isLoading) {
@@ -86,14 +129,41 @@ export function DataTable<T>({
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
-              {columns.map((c) => (
-                <TableHead
-                  key={c.key}
-                  className={cn('font-medium text-slate-600', alignClass[c.align ?? 'left'], c.headerClassName)}
-                >
-                  {c.header}
-                </TableHead>
-              ))}
+              {columns.map((c) => {
+                const sortable = !!c.sortValue
+                const isSorted = sortKey === c.key
+                return (
+                  <TableHead
+                    key={c.key}
+                    onClick={() => handleSort(c)}
+                    // Accesibilidad: aria-sort refleja el estado, y permitimos
+                    // ordenar con teclado (Enter / Espacio) cuando la columna es ordenable
+                    aria-sort={isSorted ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
+                    tabIndex={sortable ? 0 : undefined}
+                    onKeyDown={sortable ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort(c)
+                      }
+                    } : undefined}
+                    className={cn(
+                      'font-medium text-slate-600',
+                      alignClass[c.align ?? 'left'],
+                      sortable && 'cursor-pointer select-none hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50',
+                      c.headerClassName,
+                    )}
+                  >
+                    <span className={cn('inline-flex items-center gap-1', c.align === 'right' && 'flex-row-reverse')}>
+                      {c.header}
+                      {sortable && (
+                        isSorted
+                          ? (sortDir === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />)
+                          : <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
+                      )}
+                    </span>
+                  </TableHead>
+                )
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -116,13 +186,15 @@ export function DataTable<T>({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-slate-500">
-          <span>Mostrando {start + 1}–{Math.min(start + pageSize, data.length)} de {data.length}</span>
+          <span>Mostrando {start + 1}–{Math.min(start + pageSize, sortedData.length)} de {sortedData.length}</span>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0}>
+            {/* Usamos safePage (no page) como base para que los botones funcionen
+                aun si el data se achica desde el padre y deja a page desincronizado */}
+            <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, safePage - 1))} disabled={safePage === 0}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="px-2 font-data">{safePage + 1} / {totalPages}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1}>
+            <Button variant="outline" size="sm" onClick={() => setPage(Math.min(totalPages - 1, safePage + 1))} disabled={safePage >= totalPages - 1}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

@@ -3,7 +3,9 @@ import { z } from 'zod'
 // Schema de validacion para registrar un movimiento de stock
 // Sin z.coerce: la conversion a number se hace en el form con valueAsNumber
 export const movementSchema = z.object({
-  product_id: z.string().uuid('Producto invalido'),
+  // min(1) en vez de uuid(): los ids vienen de la DB y ya estan garantizados por las FK.
+  // El uuid() estricto rechazaba ids del seed que no cumplen el formato v4 exacto.
+  product_id: z.string().min(1, 'Seleccioná un producto'),
   movement_type: z.enum(['entry', 'exit', 'adjustment'], {
     message: 'Tipo de movimiento invalido',
   }),

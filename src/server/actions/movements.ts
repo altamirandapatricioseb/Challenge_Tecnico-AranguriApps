@@ -56,7 +56,8 @@ export async function createMovement(formData: unknown): Promise<ActionResult<St
 
   const supabase = await createClient()
 
-  // Para salidas: validamos stock disponible antes de insertar
+  // Para salidas: validamos stock disponible antes de insertar, para dar un error amigable
+  // El trigger de la DB tambien lo valida, pero asi evitamos el error crudo de Postgres
   if (parsed.data.movement_type === 'exit') {
     const { data: product } = await supabase
       .from('products')
@@ -87,14 +88,14 @@ export async function createMovement(formData: unknown): Promise<ActionResult<St
     .single()
 
   if (error) {
-    // El trigger lanza P0001 si el stock es insuficiente 
+    // El trigger lanza P0001 si el stock es insuficiente (defensa en profundidad)
     if (error.message.includes('Stock insuficiente')) {
       return { data: null, error: 'Stock insuficiente para esta salida.' }
     }
     return { data: null, error: 'No se pudo registrar el movimiento.' }
   }
 
-  // revalidar las vistas que lo muestran
+  // Un movimiento afecta el stock, asi que revalidamos las vistas que lo muestran
   revalidatePath('/movements')
   revalidatePath('/products')
   revalidatePath('/')
