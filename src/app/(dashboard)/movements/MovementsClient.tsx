@@ -31,9 +31,14 @@ const TYPE_LABELS: Record<MovementType, string> = {
   adjustment: 'Ajuste',
 }
 
-// Devuelve la etiqueta del tipo, o cadena vacia si viniera null
-function typeLabel(type: MovementType | null): string {
-  return type ? TYPE_LABELS[type] : ''
+// Type guard: confirma que un string sea un MovementType valido
+function isMovementType(value: string | null | undefined): value is MovementType {
+  return value === 'entry' || value === 'exit' || value === 'adjustment'
+}
+
+// Devuelve la etiqueta del tipo, o cadena vacia si no es un tipo valido
+function typeLabel(type: string | null | undefined): string {
+  return isMovementType(type) ? TYPE_LABELS[type] : ''
 }
 
 export function MovementsClient({ movements, products, canWrite }: MovementsClientProps) {
