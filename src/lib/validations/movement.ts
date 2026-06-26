@@ -1,15 +1,16 @@
 import { z } from 'zod'
 
 // Schema de validacion para registrar un movimiento de stock
+// Sin z.coerce: la conversion a number se hace en el form con valueAsNumber
 export const movementSchema = z.object({
   product_id: z.string().uuid('Producto invalido'),
   movement_type: z.enum(['entry', 'exit', 'adjustment'], {
     message: 'Tipo de movimiento invalido',
   }),
-  quantity: z.coerce.number().int('Debe ser un numero entero').min(0, 'No puede ser negativo'),
+  quantity: z.number({ message: 'Debe ser un numero' }).int('Debe ser un numero entero').min(0, 'No puede ser negativo'),
   reason: z.string().max(200, 'Maximo 200 caracteres').optional().or(z.literal('')),
   notes: z.string().max(1000, 'Maximo 1000 caracteres').optional().or(z.literal('')),
-  unit_price: z.coerce.number().min(0, 'No puede ser negativo').optional(),
+  unit_price: z.number({ message: 'Debe ser un numero' }).min(0, 'No puede ser negativo').optional(),
   reference_number: z.string().max(50, 'Maximo 50 caracteres').optional().or(z.literal('')),
 })
   // Para entry y exit la cantidad debe ser mayor a cero; adjustment puede ser cero
