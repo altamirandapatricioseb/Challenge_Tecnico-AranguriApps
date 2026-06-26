@@ -32,29 +32,32 @@ export function CategoryChart({ data }: CategoryChartProps) {
   }))
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row">
-      <ResponsiveContainer width="100%" height={200} className="max-w-[200px]">
-        <PieChart>
-          <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
-            {chartData.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#0f172a',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '12px',
-              color: '#fff',
-            }}
-            formatter={(value, name) => [`${value} productos`, String(name)]}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+    <div className="space-y-4">
+      {/* El chart con alto fijo y ancho completo, centrado */}
+      <div className="h-[180px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2}>
+              {chartData.map((entry, i) => (
+                <Cell key={i} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#0f172a',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '12px',
+                color: '#fff',
+              }}
+              formatter={(value, name) => [`${value} productos`, String(name)]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
 
-      {/* Leyenda custom con nombre, cantidad y valor de stock por categoria */}
-      <div className="flex-1 space-y-2">
+      {/* Leyenda debajo del chart, con nombre y valor de stock por categoria */}
+      <div className="space-y-2">
         {chartData.map((entry, i) => (
           <div key={i} className="flex items-center justify-between gap-3 text-sm">
             <span className="inline-flex items-center gap-2">
