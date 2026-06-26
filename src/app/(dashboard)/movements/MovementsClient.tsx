@@ -31,6 +31,11 @@ const TYPE_LABELS: Record<MovementType, string> = {
   adjustment: 'Ajuste',
 }
 
+// Devuelve la etiqueta del tipo, o cadena vacia si viniera null
+function typeLabel(type: MovementType | null): string {
+  return type ? TYPE_LABELS[type] : ''
+}
+
 export function MovementsClient({ movements, products, canWrite }: MovementsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -80,8 +85,7 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 }
       cell.alignment = { vertical: 'middle', horizontal: 'left' }
       cell.border = { bottom: { style: 'thin', color: { argb: 'FF1E40AF' } } }
-    }
-    )
+    })
     headerRow.height = 22
 
     // Filas de datos
@@ -90,7 +94,7 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
         date: m.created_at ? formatDateTime(m.created_at) : '',
         product: m.product_name,
         sku: m.product_sku ?? '',
-        type: TYPE_LABELS[m.movement_type],
+        type: typeLabel(m.movement_type),
         quantity: m.quantity,
         reason: m.reason ?? '',
         reference: m.reference_number ?? '',
