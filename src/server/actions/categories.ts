@@ -7,7 +7,6 @@ import { categorySchema } from '@/lib/validations/category'
 import type { ActionResult, Category } from '@/types'
 
 // Lista las categorias activas ordenadas por nombre
-// Se usa para poblar los selects de productos y la pagina de categorias
 export async function getCategories(): Promise<Category[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -23,7 +22,7 @@ export async function getCategories(): Promise<Category[]> {
   return data ?? []
 }
 
-// Crea una categoria nueva
+// Crea una categoria. Si ya existe una inactiva con el mismo nombre la reactiva
 export async function createCategory(formData: unknown): Promise<ActionResult<Category>> {
   await requireRole('manager')
 
@@ -38,6 +37,35 @@ export async function createCategory(formData: unknown): Promise<ActionResult<Ca
     description: parsed.data.description || null,
   }
 
+  //  sin distinguir mayusculas
+  const { data: existing } = await supabase
+    .from('categories')
+    .select('id, is_active')
+    .ilike('name', payload.name)
+    .maybeSingle()
+
+  if (existing) {
+    if (existing.is_active) {
+      // Ya existe y esta activa: es un duplicado real
+      return { data: null, error: 'Ya existe una categoria con ese nombre.' }
+    }
+    // Existe pero inactiva: la reactivamos y actualizamos sus datos
+    const { data, error } = await supabase
+      .from('categories')
+      .update({ ...payload, is_active: true })
+      .eq('id', existing.id)
+      .select()
+      .single()
+
+    if (error) {
+      return { data: null, error: 'No se pudo crear la categoria.' }
+    }
+    revalidatePath('/categories')
+    revalidatePath('/products')
+    return { data, error: null }
+  }
+
+  // No existe: insertamos nueva
   const { data, error } = await supabase
     .from('categories')
     .insert(payload)
@@ -45,7 +73,6 @@ export async function createCategory(formData: unknown): Promise<ActionResult<Ca
     .single()
 
   if (error) {
-    // Codigo 23505 = violacion de unique (nombre duplicado)
     if (error.code === '23505') {
       return { data: null, error: 'Ya existe una categoria con ese nombre.' }
     }
@@ -91,8 +118,7 @@ export async function updateCategory(id: string, formData: unknown): Promise<Act
   return { data, error: null }
 }
 
-// Soft delete: marca la categoria como inactiva en vez de borrarla. Solo admin.
-// Los productos que la usaban conservan el category_id pero la categoria deja de listarse
+// Soft delete: marca la categoria como inactiva. Solo admin
 export async function deleteCategory(id: string): Promise<ActionResult> {
   await requireRole('admin')
   const supabase = await createClient()
