@@ -16,16 +16,20 @@ import {
 import { createProduct, updateProduct } from '@/server/actions/products'
 import { createMovement } from '@/server/actions/movements'
 import { formatCurrency } from '@/lib/format.utils'
+import { getStockStatus } from '@/lib/stock.utils'
 import type { ProductFormValues } from '@/lib/validations/product'
 import type { MovementFormValues } from '@/lib/validations/movement'
 import { Package, Pencil, ArrowLeftRight, Search } from 'lucide-react'
-import type { Category, ProductWithDetails, Supplier } from '@/types'
+import type { Category, ProductWithDetails, Supplier, StockStatus } from '@/types'
 
 interface ProductsClientProps {
   products: ProductWithDetails[]
   categories: Category[]
   suppliers: Supplier[]
 }
+
+// Peso numerico de cada estado para ordenar: critico primero, ok ultimo
+const STATUS_RANK: Record<StockStatus, number> = { critical: 0, low: 1, ok: 2 }
 
 export function ProductsClient({ products, categories, suppliers }: ProductsClientProps) {
   const router = useRouter()
@@ -94,7 +98,13 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
       ) : <span className="text-slate-400">—</span>,
     },
     { key: 'stock', header: 'Stock', align: 'right', sortValue: (p) => p.current_stock ?? 0, cell: (p) => <span className="font-data">{p.current_stock} {p.unit}</span> },
-    { key: 'status', header: 'Estado', sortValue: (p) => p.current_stock ?? 0, cell: (p) => <StockBadge currentStock={p.current_stock ?? 0} minStock={p.min_stock ?? 0} /> },
+    {
+      key: 'status', header: 'Estado',
+      // Ordena por el estado calculado (critico->bajo->ok), no por el stock crudo,
+      // porque el estado depende de la relacion current_stock vs min_stock
+      sortValue: (p) => STATUS_RANK[getStockStatus(p.current_stock ?? 0, p.min_stock ?? 0)],
+      cell: (p) => <StockBadge currentStock={p.current_stock ?? 0} minStock={p.min_stock ?? 0} />,
+    },
     { key: 'price', header: 'Precio', align: 'right', sortValue: (p) => p.unit_price ?? 0, cell: (p) => <span className="font-data">{formatCurrency(p.unit_price ?? 0)}</span> },
     { key: 'supplier', header: 'Proveedor', sortValue: (p) => p.supplier_name ?? '', cell: (p) => <span className="text-slate-600">{p.supplier_name || '—'}</span> },
     {
