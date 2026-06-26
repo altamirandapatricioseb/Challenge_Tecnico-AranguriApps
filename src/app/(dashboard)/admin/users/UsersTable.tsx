@@ -14,23 +14,19 @@ interface UsersTableProps {
 export function UsersTable({ users, currentUserId }: UsersTableProps) {
   const columns: Column<AdminUserOverview>[] = [
     {
-      key: 'email',
-      header: 'Email',
+      key: 'email', header: 'Email', sortValue: (u) => u.email ?? '',
       cell: (u) => <span className="font-data text-slate-700">{u.email ?? '—'}</span>,
     },
     {
-      key: 'full_name',
-      header: 'Nombre',
+      key: 'full_name', header: 'Nombre', sortValue: (u) => u.full_name ?? '',
       cell: (u) => <span className="text-slate-900">{u.full_name || '—'}</span>,
     },
     {
-      key: 'created_at',
-      header: 'Registrado',
+      key: 'created_at', header: 'Registrado', sortValue: (u) => u.created_at ?? '',
       cell: (u) => <span className="text-slate-500">{u.created_at ? formatDate(u.created_at) : '—'}</span>,
     },
     {
-      key: 'role',
-      header: 'Rol',
+      key: 'role', header: 'Rol', sortValue: (u) => u.role ?? '',
       cell: (u) => (
         <RoleSelect
           userId={u.id ?? ''}

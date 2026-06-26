@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/app/DataTable'
@@ -11,7 +11,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { createSupplier, updateSupplier } from '@/server/actions/suppliers'
 import type { SupplierFormValues } from '@/lib/validations/supplier'
 import { Truck, Pencil } from 'lucide-react'
-import { useState } from 'react'
 import type { Supplier } from '@/types'
 
 interface SuppliersClientProps {
@@ -51,14 +50,12 @@ export function SuppliersClient({ suppliers }: SuppliersClientProps) {
   }
 
   const columns: Column<Supplier>[] = [
-    { key: 'name', header: 'Nombre', cell: (s) => <span className="font-medium text-slate-900">{s.name}</span> },
-    { key: 'contact', header: 'Contacto', cell: (s) => <span className="text-slate-600">{s.contact_name || '—'}</span> },
-    { key: 'email', header: 'Email', cell: (s) => <span className="font-data text-slate-600">{s.email || '—'}</span> },
-    { key: 'phone', header: 'Teléfono', cell: (s) => <span className="font-data text-slate-600">{s.phone || '—'}</span> },
+    { key: 'name', header: 'Nombre', sortValue: (s) => s.name, cell: (s) => <span className="font-medium text-slate-900">{s.name}</span> },
+    { key: 'contact', header: 'Contacto', sortValue: (s) => s.contact_name ?? '', cell: (s) => <span className="text-slate-600">{s.contact_name || '—'}</span> },
+    { key: 'email', header: 'Email', sortValue: (s) => s.email ?? '', cell: (s) => <span className="font-data text-slate-600">{s.email || '—'}</span> },
+    { key: 'phone', header: 'Teléfono', sortValue: (s) => s.phone ?? '', cell: (s) => <span className="font-data text-slate-600">{s.phone || '—'}</span> },
     {
-      key: 'actions',
-      header: '',
-      align: 'right',
+      key: 'actions', header: '', align: 'right',
       cell: (s) => (
         <Button variant="ghost" size="sm" onClick={() => setEditing(s)}>
           <Pencil className="h-4 w-4" />
@@ -91,7 +88,7 @@ export function SuppliersClient({ suppliers }: SuppliersClientProps) {
         emptyDescription="Agregá tu primer proveedor para asociarlo a productos."
       />
 
-      {/* Sheet de edición, controlado por el estado editing */}
+      {/* Sheet de edición */}
       <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader>

@@ -69,9 +69,9 @@ export function MovementsClient({ movements, products }: MovementsClientProps) {
   }
 
   const columns: Column<MovementWithProduct>[] = [
-    { key: 'date', header: 'Fecha', cell: (m) => <span className="text-slate-500">{m.created_at ? formatDateTime(m.created_at) : '—'}</span> },
+    { key: 'date', header: 'Fecha', sortValue: (m) => m.created_at ?? '', cell: (m) => <span className="text-slate-500">{m.created_at ? formatDateTime(m.created_at) : '—'}</span> },
     {
-      key: 'product', header: 'Producto',
+      key: 'product', header: 'Producto', sortValue: (m) => m.product_name ?? '',
       cell: (m) => (
         <div>
           <span className="font-medium text-slate-900">{m.product_name}</span>
@@ -79,10 +79,10 @@ export function MovementsClient({ movements, products }: MovementsClientProps) {
         </div>
       ),
     },
-    { key: 'type', header: 'Tipo', cell: (m) => <MovementTypeBadge type={m.movement_type} /> },
-    { key: 'qty', header: 'Cantidad', align: 'right', cell: (m) => <span className="font-data">{m.quantity}</span> },
-    { key: 'reason', header: 'Motivo', cell: (m) => <span className="text-slate-600">{m.reason || '—'}</span> },
-    { key: 'ref', header: 'Referencia', cell: (m) => <span className="font-data text-slate-500">{m.reference_number || '—'}</span> },
+    { key: 'type', header: 'Tipo', sortValue: (m) => m.movement_type ?? '', cell: (m) => <MovementTypeBadge type={m.movement_type} /> },
+    { key: 'qty', header: 'Cantidad', align: 'right', sortValue: (m) => m.quantity ?? 0, cell: (m) => <span className="font-data">{m.quantity}</span> },
+    { key: 'reason', header: 'Motivo', sortValue: (m) => m.reason ?? '', cell: (m) => <span className="text-slate-600">{m.reason || '—'}</span> },
+    { key: 'ref', header: 'Referencia', sortValue: (m) => m.reference_number ?? '', cell: (m) => <span className="font-data text-slate-500">{m.reference_number || '—'}</span> },
   ]
 
   return (

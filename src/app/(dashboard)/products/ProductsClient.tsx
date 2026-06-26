@@ -82,10 +82,10 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
   }
 
   const columns: Column<ProductWithDetails>[] = [
-    { key: 'sku', header: 'SKU', cell: (p) => <span className="font-data text-slate-500">{p.sku || '—'}</span> },
-    { key: 'name', header: 'Producto', cell: (p) => <span className="font-medium text-slate-900">{p.name}</span> },
+    { key: 'sku', header: 'SKU', sortValue: (p) => p.sku ?? '', cell: (p) => <span className="font-data text-slate-500">{p.sku || '—'}</span> },
+    { key: 'name', header: 'Producto', sortValue: (p) => p.name ?? '', cell: (p) => <span className="font-medium text-slate-900">{p.name}</span> },
     {
-      key: 'category', header: 'Categoría',
+      key: 'category', header: 'Categoría', sortValue: (p) => p.category_name ?? '',
       cell: (p) => p.category_name ? (
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.category_color ?? '#94a3b8' }} />
@@ -93,10 +93,10 @@ export function ProductsClient({ products, categories, suppliers }: ProductsClie
         </span>
       ) : <span className="text-slate-400">—</span>,
     },
-    { key: 'stock', header: 'Stock', align: 'right', cell: (p) => <span className="font-data">{p.current_stock} {p.unit}</span> },
-    { key: 'status', header: 'Estado', cell: (p) => <StockBadge currentStock={p.current_stock ?? 0} minStock={p.min_stock ?? 0} /> },
-    { key: 'price', header: 'Precio', align: 'right', cell: (p) => <span className="font-data">{formatCurrency(p.unit_price ?? 0)}</span> },
-    { key: 'supplier', header: 'Proveedor', cell: (p) => <span className="text-slate-600">{p.supplier_name || '—'}</span> },
+    { key: 'stock', header: 'Stock', align: 'right', sortValue: (p) => p.current_stock ?? 0, cell: (p) => <span className="font-data">{p.current_stock} {p.unit}</span> },
+    { key: 'status', header: 'Estado', sortValue: (p) => p.current_stock ?? 0, cell: (p) => <StockBadge currentStock={p.current_stock ?? 0} minStock={p.min_stock ?? 0} /> },
+    { key: 'price', header: 'Precio', align: 'right', sortValue: (p) => p.unit_price ?? 0, cell: (p) => <span className="font-data">{formatCurrency(p.unit_price ?? 0)}</span> },
+    { key: 'supplier', header: 'Proveedor', sortValue: (p) => p.supplier_name ?? '', cell: (p) => <span className="text-slate-600">{p.supplier_name || '—'}</span> },
     {
       key: 'actions', header: '', align: 'right',
       cell: (p) => (
