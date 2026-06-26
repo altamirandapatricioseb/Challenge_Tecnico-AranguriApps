@@ -8,9 +8,15 @@ const CONFIG: Record<MovementType, { label: string; Icon: LucideIcon; className:
   adjustment: { label: 'Ajuste',  Icon: SlidersHorizontal, className: 'bg-blue-50 text-blue-700 ring-blue-200' },
 }
 
-interface MovementTypeBadgeProps { type: MovementType; className?: string }
+// Acepta null/undefined para tolerar los campos nullable de las vistas
+interface MovementTypeBadgeProps { type: MovementType | null | undefined; className?: string }
 
 export function MovementTypeBadge({ type, className }: MovementTypeBadgeProps) {
+  // Si no hay tipo valido, no renderizamos el badge
+  if (!type || !CONFIG[type]) {
+    return <span className="text-slate-400">—</span>
+  }
+
   const { label, Icon, className: cls } = CONFIG[type]
   return (
     <span
