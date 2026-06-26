@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
 import {
-  LayoutDashboard, Package, ArrowLeftRight, Truck, LogOut, Boxes, ShieldCheck,
+  LayoutDashboard, Package, ArrowLeftRight, Truck, Tag, LogOut, Boxes, ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -24,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/',            label: 'Dashboard',   icon: LayoutDashboard, exact: true },
   { href: '/products',    label: 'Productos',   icon: Package },
   { href: '/movements',   label: 'Movimientos', icon: ArrowLeftRight },
+  { href: '/categories',  label: 'Categorías',  icon: Tag },
   { href: '/suppliers',   label: 'Proveedores', icon: Truck },
   { href: '/admin/users', label: 'Usuarios',    icon: ShieldCheck, adminOnly: true },
 ]
