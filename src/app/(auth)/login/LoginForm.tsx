@@ -92,7 +92,7 @@ export function LoginForm() {
 
       <p className="mt-5 text-center text-sm text-slate-500">
         ¿No tenés cuenta?{' '}
-        <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+        <Link href="/register" className="font-medium hover:opacity-80" style={{ color: '#eab308' }}>
           Registrate
         </Link>
       </p>

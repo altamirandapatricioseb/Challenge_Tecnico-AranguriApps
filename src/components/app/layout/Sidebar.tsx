@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
 import {
-  LayoutDashboard, Package, ArrowLeftRight, Truck, Tag, LogOut, Boxes, ShieldCheck,
+  LayoutDashboard, Package, ArrowLeftRight, Truck, Tag, LogOut, ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -50,12 +51,13 @@ export function SidebarContent({ user, onNavigate, onLogout }: {
   const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || user.role === 'admin')
 
   return (
-    <div className="flex h-full flex-col bg-slate-900 text-slate-300">
-      <div className="flex h-16 items-center gap-2 border-b border-slate-800 px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-          <Boxes className="h-5 w-5 text-white" />
+    <div className="flex h-full flex-col" style={{ backgroundColor: '#101115', color: '#9a9da4' }}>
+      <div className="flex h-16 items-center gap-2 px-5" style={{ borderBottom: '1px solid #1d2026' }}>
+        {/* Logo desde public/logo.png */}
+        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg">
+          <Image src="/logo.png" alt="InventFlow" width={32} height={32} className="h-8 w-8 object-contain" />
         </div>
-        <span className="text-base font-semibold tracking-tight text-white">InventFlow</span>
+        <span className="text-base font-semibold tracking-tight" style={{ color: '#f1efe9' }}>InventFlow</span>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -70,10 +72,24 @@ export function SidebarContent({ user, onNavigate, onLogout }: {
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                active
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white',
               )}
+              style={
+                active
+                  ? { backgroundColor: '#eab308', color: '#0c0d0f' }
+                  : { color: '#9a9da4' }
+              }
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = '#15171c'
+                  e.currentTarget.style.color = '#f1efe9'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = '#9a9da4'
+                }
+              }}
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
@@ -82,19 +98,24 @@ export function SidebarContent({ user, onNavigate, onLogout }: {
         })}
       </nav>
 
-      <div className="border-t border-slate-800 p-3">
+      <div className="p-3" style={{ borderTop: '1px solid #1d2026' }}>
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-500">
+          <DropdownMenuTrigger
+            className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors focus-visible:ring-2"
+            style={{ color: '#f1efe9' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#15171c' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-indigo-600 text-xs text-white">{initials}</AvatarFallback>
+              <AvatarFallback className="text-xs" style={{ backgroundColor: '#eab308', color: '#0c0d0f' }}>{initials}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{user.name}</p>
-              <p className="truncate text-xs text-slate-400">{ROLE_LABEL[user.role]}</p>
+              <p className="truncate text-sm font-medium" style={{ color: '#f1efe9' }}>{user.name}</p>
+              <p className="truncate text-xs" style={{ color: '#8a8d94' }}>{ROLE_LABEL[user.role]}</p>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-56">
-            <DropdownMenuItem onClick={onLogout} className="text-red-600 focus:text-red-600">
+            <DropdownMenuItem onClick={onLogout} className="text-red-500 focus:text-red-500">
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesión
             </DropdownMenuItem>

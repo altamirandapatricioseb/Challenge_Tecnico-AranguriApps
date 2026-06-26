@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -48,73 +48,56 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ============================================================
+   InventFlow — Tema oscuro fijo con acento ambar
+   Paleta aplicada directamente sobre :root (la app no usa toggle dark)
+   ============================================================ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Fondos */
+  --background: #0c0d0f;          /* fondo general de la app */
+  --foreground: #f1efe9;          /* texto principal (blanco calido) */
+  --card: #121317;                /* cards y tablas */
+  --card-foreground: #f1efe9;
+  --popover: #121317;             /* dropdowns, selects desplegados */
+  --popover-foreground: #f1efe9;
+
+  /* Acento ambar como primary */
+  --primary: #eab308;             /* acento principal: botones, activos */
+  --primary-foreground: #0c0d0f;  /* texto sobre el ambar (oscuro) */
+
+  /* Secundarios y apagados */
+  --secondary: #0e0f12;           /* inputs y selects */
+  --secondary-foreground: #f1efe9;
+  --muted: #0e0f12;
+  --muted-foreground: #9a9da4;    /* texto secundario */
+  --accent: #15171c;              /* hover de filas / elementos */
+  --accent-foreground: #f1efe9;
+
+  --destructive: #ef4444;         /* rojo de eliminar / errores */
+
+  /* Bordes e inputs */
+  --border: #1d2026;              /* bordes principales */
+  --input: #24272e;               /* borde de inputs/botones */
+  --ring: #eab308;                /* foco: ambar */
+
+  /* Charts: ambar + tonos calidos/neutros que combinan con el tema */
+  --chart-1: #eab308;
+  --chart-2: #e3b53a;
+  --chart-3: #9a9da4;
+  --chart-4: #6c6f76;
+  --chart-5: #5d6066;
+
+  /* Sidebar */
+  --sidebar: #101115;                       /* fondo sidebar */
+  --sidebar-foreground: #9a9da4;            /* texto items inactivos */
+  --sidebar-primary: #eab308;               /* item activo (fondo) */
+  --sidebar-primary-foreground: #0c0d0f;    /* texto del item activo */
+  --sidebar-accent: #15171c;                /* hover de items */
+  --sidebar-accent-foreground: #f1efe9;     /* texto en hover */
+  --sidebar-border: #1d2026;                /* borde/divisores sidebar */
+  --sidebar-ring: #eab308;
 }
 
 @layer base {
@@ -137,4 +120,42 @@ body {
   font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+  color: var(--accent-data, #e3b53a);
 }
+
+/* Scrollbar oscura coherente con el tema */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0c0d0f; }
+::-webkit-scrollbar-thumb { background: #24272e; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #6c6f76; }
+
+body {
+  background-color: #0c0d0f !important;
+  color: #f1efe9 !important;
+}
+
+/* Textos: los slate oscuros pasan a claros */
+.text-slate-900 { color: #f1efe9 !important; }
+.text-slate-800 { color: #ecebe5 !important; }
+.text-slate-700 { color: #d8d7d1 !important; }
+.text-slate-600 { color: #9a9da4 !important; }
+.text-slate-500 { color: #8a8d94 !important; }
+.text-slate-400 { color: #6c6f76 !important; }
+
+/* Fondos claros que quedaron hardcodeados pasan a oscuros */
+.bg-white { background-color: #121317 !important; }
+.bg-slate-50 { background-color: #0c0d0f !important; }
+.bg-slate-50\/80 { background-color: #15171c !important; }
+.bg-slate-100 { background-color: #15171c !important; }
+
+/* Bordes claros pasan a oscuros */
+.border-slate-200 { border-color: #1d2026 !important; }
+.border-slate-100 { border-color: #1a1d22 !important; }
+
+/* Hover de filas en tablas */
+.hover\:bg-slate-50:hover { background-color: #15171c !important; }
+.hover\:bg-slate-50\/80:hover { background-color: #15171c !important; }
+
+/* Encabezados de tabla (thead) */
+.bg-slate-50.hover\:bg-slate-50 { background-color: #0f1013 !important; }
+

@@ -139,7 +139,7 @@ export function RegisterForm() {
 
       <p className="mt-5 text-center text-sm text-slate-500">
         ¿Ya tenés cuenta?{' '}
-        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+        <Link href="/login" className="font-medium hover:opacity-80" style={{ color: '#eab308' }}>
           Iniciá sesión
         </Link>
       </p>

@@ -9,7 +9,7 @@ interface DashboardShellProps {
 
 export function DashboardShell({ user, children }: DashboardShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#0c0d0f' }}>
       {/* signOut es una Server Action; se invoca desde el dropdown de la sidebar */}
       <Sidebar user={user} onLogout={signOut} />
       <div className="md:pl-60">
