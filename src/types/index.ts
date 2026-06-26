@@ -1,5 +1,9 @@
 export type * from './database.types'
-import type { Database, MovementType, UserRole } from './database.types'
+import type { Database } from './database.types'
+
+// Enums del dominio, definidos aca para no depender de como los exporte el archivo generado
+export type UserRole     = 'admin' | 'manager' | 'viewer'
+export type MovementType = 'entry' | 'exit' | 'adjustment'
 
 // Aliases de Row types
 export type Profile       = Database['public']['Tables']['profiles']['Row']
@@ -43,6 +47,3 @@ export type DashboardKPIs = {
 export type ActionResult<T = null> =
   | { data: T;    error: null }
   | { data: null; error: string }
-
-// Re-export enums para usar en componentes sin importar desde database.types
-export type { MovementType, UserRole }
