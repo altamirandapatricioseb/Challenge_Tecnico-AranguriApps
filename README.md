@@ -40,6 +40,8 @@ La demo está poblada con tres usuarios, uno por cada rol, para probar el contro
 | **Encargado** | `manager@email.com` | `Manager123` | Ver, crear y editar (sin eliminar ni gestionar usuarios) |
 | **Lectura** | `viewer@email.com` | `Viewer123` | Solo consulta y exportación de reportes |
 
+> Estos usuarios ya están cargados en la **demo desplegada en Vercel**. En una instalación local no existen: se crean registrándose desde `/register` y luego asignando el rol por SQL (ver el README de la carpeta `supabase/`).
+>
 > Iniciá sesión con cada uno para ver cómo la interfaz se adapta al rol: los botones de escritura y borrado solo aparecen cuando el rol lo permite.
 
 ---
