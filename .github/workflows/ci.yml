@@ -1,0 +1,49 @@
+name: CI
+
+# Corre en cada push y en cada pull request hacia main
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Lint, Types, Tests & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Trae el codigo del repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Instala Node 20 con cache de npm para acelerar
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Instala dependencias de forma reproducible (usa package-lock)
+      - name: Install dependencies
+        run: npm ci
+
+      # Linter
+      - name: Lint
+        run: npm run lint
+
+      # Chequeo de tipos (el mismo que falla en Vercel si hay errores)
+      - name: Type check
+        run: npm run typecheck
+
+      # Tests unitarios con Vitest
+      - name: Tests
+        run: npm test
+
+      # Build de produccion: variables dummy para que Next no falle al inicializar
+      # el cliente de Supabase. No conecta a la DB real, solo compila
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key-for-build
