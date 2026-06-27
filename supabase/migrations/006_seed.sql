@@ -1,8 +1,10 @@
 -- ============================================================
--- Datos de ejemplo (seed)
+-- MIGRACION 006 — Datos de ejemplo (seed)
+-- ============================================================
+-- Carga categorias, proveedores, productos y movimientos de ejemplo.
+-- El stock de cada producto se construye a partir de los movimientos.
 -- ============================================================
 
--- ── Categories ────────────────────────────────────────────────
 INSERT INTO categories (id, name, description, color) VALUES
   ('11111111-0000-0000-0000-000000000001', 'Electrónica',  'Componentes y dispositivos electrónicos', '#6366f1'),
   ('11111111-0000-0000-0000-000000000002', 'Herramientas', 'Herramientas manuales y eléctricas',       '#f59e0b'),

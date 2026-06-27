@@ -1,5 +1,8 @@
 -- ============================================================
--- Auto-crear profile al registrarse un usuario
+-- MIGRACION 002 — Auto-crear profile al registrarse
+-- ============================================================
+-- Trigger sobre auth.users que crea automaticamente el registro en profiles
+-- cuando un usuario se registra, con rol 'viewer' por defecto.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION handle_new_user()

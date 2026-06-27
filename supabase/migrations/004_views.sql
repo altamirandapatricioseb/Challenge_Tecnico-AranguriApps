@@ -1,8 +1,11 @@
 -- ============================================================
--- vistas para consultas frecuentes
+-- MIGRACION 004 — Vistas de consulta
+-- ============================================================
+-- Vistas para consultas frecuentes: productos con detalle, stock bajo,
+-- movimientos con producto, resumen diario y distribucion por categoria.
+-- products_with_details oculta categorias/proveedores soft-deleted (is_active).
 -- ============================================================
 
--- Vista: productos con datos de categoría y proveedor
 CREATE OR REPLACE VIEW products_with_details
 WITH (security_invoker = true)
 AS
@@ -20,10 +23,13 @@ SELECT
   p.created_at,
   p.updated_at,
   p.category_id,
-  c.name  AS category_name,
-  c.color AS category_color,
+  -- Solo se muestra la categoria si esta activa (soft delete): si fue desactivada,
+  -- el producto muestra null aunque conserve el category_id en la tabla products
+  CASE WHEN c.is_active THEN c.name  ELSE NULL END AS category_name,
+  CASE WHEN c.is_active THEN c.color ELSE NULL END AS category_color,
   p.supplier_id,
-  s.name  AS supplier_name
+  -- Mismo criterio para el proveedor: si fue desactivado, no se muestra
+  CASE WHEN s.is_active THEN s.name  ELSE NULL END AS supplier_name
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
 LEFT JOIN suppliers  s ON p.supplier_id  = s.id;

@@ -1,8 +1,12 @@
 -- ============================================================
--- — Schema inicial
+-- MIGRACION 001 — Schema inicial
+-- ============================================================
+-- Tablas: profiles, categories, suppliers, products, stock_movements.
+-- Incluye indices, el trigger de stock (handle_stock_movement), los triggers
+-- de inmutabilidad de movimientos (block_movement_mutation) y el de updated_at.
+-- Las tablas products, suppliers y categories tienen is_active para soft delete.
 -- ============================================================
 
--- Helper: actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -36,6 +40,7 @@ CREATE TABLE IF NOT EXISTS categories (
   name        TEXT NOT NULL,
   description TEXT,
   color       TEXT NOT NULL DEFAULT '#6366f1',
+  is_active   BOOLEAN NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT  categories_name_unique UNIQUE (name)
 );

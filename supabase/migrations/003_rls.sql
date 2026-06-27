@@ -1,8 +1,10 @@
 -- ============================================================
--- Row Level Security
+-- MIGRACION 003 — Row Level Security
+-- ============================================================
+-- Funcion get_my_role() y politicas RLS por rol (admin / manager / viewer)
+-- para todas las tablas. La seguridad se valida en la base de datos.
 -- ============================================================
 
---obtener rol del usuario actual
 CREATE OR REPLACE FUNCTION get_my_role()
 RETURNS TEXT AS $$
   SELECT role FROM profiles WHERE id = auth.uid()
