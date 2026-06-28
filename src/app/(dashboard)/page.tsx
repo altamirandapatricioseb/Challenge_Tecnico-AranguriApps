@@ -15,6 +15,10 @@ import {
   getStockAlerts,
 } from '@/server/actions/dashboard'
 
+// El dashboard siempre trae datos frescos
+// Asi los KPIs, el grafico y las tablas reflejan el estado real en cada visita.
+export const dynamic = 'force-dynamic'
+
 // Saludo segun la hora del dia
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -24,12 +28,12 @@ function getGreeting(): string {
 }
 
 export default async function DashboardPage() {
-  // Traemos todo en paralelo
+  // Traemos todo en paralelo. El grafico pide 7 dias (la ventana que muestra).
   const [profile, kpis, recentMovements, chartData, categoryDist, alerts] = await Promise.all([
     getProfile(),
     getDashboardKPIs(),
     getRecentMovements(5),
-    getMovementChartData(30),
+    getMovementChartData(7),
     getCategoryDistribution(),
     getStockAlerts(),
   ])
@@ -51,32 +55,32 @@ export default async function DashboardPage() {
         <KpiCard title="Valor de stock" value={formatCurrency(kpis.stock_value)} icon={DollarSign} hint="Inventario valorizado" />
       </div>
 
-      {/* Charts: ambas cards son clickeables y navegan a su seccion */}
+      {/* Charts: el titulo es el link a la seccion; el area del grafico queda interactiva */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Link
-          href="/movements"
-          className="group block lg:col-span-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-        >
-          <Card className="h-full p-5 transition group-hover:border-amber-500/60 group-hover:shadow-md">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-700">Movimientos (últimos 30 días)</h3>
-              <span className="text-xs text-slate-400 transition group-hover:text-amber-600">Ver movimientos →</span>
-            </div>
-            <MovementsChart data={chartData} />
-          </Card>
-        </Link>
-        <Link
-          href="/categories"
-          className="group block rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-        >
-          <Card className="h-full p-5 transition group-hover:border-amber-500/60 group-hover:shadow-md">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-700">Distribución por categoría</h3>
-              <span className="text-xs text-slate-400 transition group-hover:text-amber-600">Ver categorías →</span>
-            </div>
-            <CategoryChart data={categoryDist} />
-          </Card>
-        </Link>
+        <Card className="p-5 lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">Movimientos (últimos 7 días)</h3>
+            <Link
+              href="/movements"
+              className="text-xs font-medium text-slate-400 transition hover:text-amber-600"
+            >
+              Ver movimientos →
+            </Link>
+          </div>
+          <MovementsChart data={chartData} />
+        </Card>
+        <Card className="p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">Distribución por categoría</h3>
+            <Link
+              href="/categories"
+              className="text-xs font-medium text-slate-400 transition hover:text-amber-600"
+            >
+              Ver categorías →
+            </Link>
+          </div>
+          <CategoryChart data={categoryDist} />
+        </Card>
       </div>
 
       {/* Tablas: ultimos movimientos + alertas (en client component por las funciones de columna) */}
