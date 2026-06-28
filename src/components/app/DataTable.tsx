@@ -147,7 +147,7 @@ export function DataTable<T>({
                       }
                     } : undefined}
                     className={cn(
-                      'font-medium text-slate-600',
+                      'font-medium text-slate-600 transition-colors duration-150',
                       alignClass[c.align ?? 'left'],
                       sortable && 'cursor-pointer select-none hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50',
                       c.headerClassName,
@@ -157,8 +157,8 @@ export function DataTable<T>({
                       {c.header}
                       {sortable && (
                         isSorted
-                          ? (sortDir === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />)
-                          : <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
+                          ? (sortDir === 'asc' ? <ChevronUp className="h-3.5 w-3.5 transition-transform duration-200" /> : <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200" />)
+                          : <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300 transition-colors duration-150 group-hover:text-slate-400" />
                       )}
                     </span>
                   </TableHead>
@@ -171,7 +171,12 @@ export function DataTable<T>({
               <TableRow
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={cn('hover:bg-slate-50/80', onRowClick && 'cursor-pointer')}
+                // Transicion suave de fondo al pasar el mouse; si la fila es clickeable,
+                // ademas resalta con el color de acento y se "ilumina" el borde izquierdo
+                className={cn(
+                  'transition-colors duration-150 hover:bg-slate-50/80 motion-reduce:transition-none',
+                  onRowClick && 'cursor-pointer hover:bg-amber-50/50 hover:shadow-[inset_3px_0_0_0] hover:shadow-amber-400',
+                )}
               >
                 {columns.map((c) => (
                   <TableCell key={c.key} className={cn(alignClass[c.align ?? 'left'], c.cellClassName)}>
