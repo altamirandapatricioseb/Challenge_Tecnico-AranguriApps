@@ -15,7 +15,7 @@ import {
   getStockAlerts,
 } from '@/server/actions/dashboard'
 
-// El dashboard siempre trae datos frescos: nada de cache estatico.
+// El dashboard siempre trae datos frescos
 // Asi los KPIs, el grafico y las tablas reflejan el estado real en cada visita.
 export const dynamic = 'force-dynamic'
 
@@ -28,12 +28,13 @@ function getGreeting(): string {
 }
 
 export default async function DashboardPage() {
-  // Traemos todo en paralelo. El grafico pide 7 dias (la ventana que muestra).
+  // Traemos todo en paralelo. El grafico pide 90 dias (el rango maximo del selector);
+  // el componente recorta a 7/30/90 segun lo que elija el usuario, sin volver a consultar.
   const [profile, kpis, recentMovements, chartData, categoryDist, alerts] = await Promise.all([
     getProfile(),
     getDashboardKPIs(),
     getRecentMovements(5),
-    getMovementChartData(7),
+    getMovementChartData(90),
     getCategoryDistribution(),
     getStockAlerts(),
   ])
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
         >
           <Card className="h-full p-5 transition group-hover:border-amber-500/60 group-hover:shadow-md">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-700">Movimientos (últimos 7 días)</h3>
+              <h3 className="text-sm font-semibold text-slate-700">Movimientos</h3>
               <span className="text-xs text-slate-400 transition group-hover:text-amber-600">Ver movimientos →</span>
             </div>
             <MovementsChart data={chartData} />
