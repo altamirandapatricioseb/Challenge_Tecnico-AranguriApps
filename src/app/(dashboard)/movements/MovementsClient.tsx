@@ -31,6 +31,13 @@ const TYPE_LABELS: Record<MovementType, string> = {
   adjustment: 'Ajuste',
 }
 
+// Etiquetas para el nombre de archivo (plural, en minuscula)
+const TYPE_FILE_LABELS: Record<MovementType, string> = {
+  entry: 'entradas',
+  exit: 'salidas',
+  adjustment: 'ajustes',
+}
+
 // Type guard: confirma que un string sea un MovementType valido
 function isMovementType(value: string | null | undefined): value is MovementType {
   return value === 'entry' || value === 'exit' || value === 'adjustment'
@@ -41,6 +48,16 @@ function typeLabel(type: string | null | undefined): string {
   return isMovementType(type) ? TYPE_LABELS[type] : ''
 }
 
+// Normaliza un texto para usarlo en un nombre de archivo:
+// saca acentos, pasa a minuscula, espacios y caracteres raros -> guion
+function slugify(text: string): string {
+  return text
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita acentos
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') // todo lo no alfanumerico -> guion
+    .replace(/^-+|-+$/g, '')     // saca guiones al inicio/final
+}
+
 export function MovementsClient({ movements, products, canWrite }: MovementsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -48,6 +65,26 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
 
   // Filtro por tipo en memoria
   const filtered = movements.filter((m) => typeFilter === 'all' || m.movement_type === typeFilter)
+
+  // Construye el nombre del archivo segun los filtros activos.
+  // Estructura: movimientos_<filtros>_<fecha>.xlsx
+  // Hoy el unico filtro es el tipo; armado asi es facil sumar producto/fecha despues.
+  function buildFileName(): string {
+    const parts: string[] = ['movimientos']
+
+    // Filtro de tipo (si hay uno distinto de "todos")
+    if (typeFilter !== 'all') {
+      parts.push(TYPE_FILE_LABELS[typeFilter])
+    } else {
+      parts.push('todos')
+    }
+
+    // Fecha del dia en formato YYYY-MM-DD (ordena cronologicamente)
+    const today = new Date().toISOString().split('T')[0]
+    parts.push(today)
+
+    return `${parts.join('_')}.xlsx`
+  }
 
   async function handleCreate(values: MovementFormValues, close: () => void) {
     startTransition(async () => {
@@ -117,7 +154,7 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
       row.getCell('type').alignment = { horizontal: 'center' }
     })
 
-    // Genera el archivo y dispara la descarga
+    // Genera el archivo y dispara la descarga con el nombre segun el filtro
     const buffer = await workbook.xlsx.writeBuffer()
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -125,7 +162,7 @@ export function MovementsClient({ movements, products, canWrite }: MovementsClie
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `movimientos_${new Date().toISOString().split('T')[0]}.xlsx`
+    link.download = buildFileName()
     link.click()
     URL.revokeObjectURL(url)
   }
