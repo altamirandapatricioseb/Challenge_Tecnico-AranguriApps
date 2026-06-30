@@ -2,8 +2,8 @@
 
 **Sistema de gestión de inventario para PYMEs** — desarrollado como challenge técnico para AranguriApps (posición Software Engineer Web).
 
-🔗 **Demo en producción:** [challenge-tecnico-aranguri-apps.vercel.app](https://challenge-tecnico-aranguri-apps.vercel.app/)
-📦 **Repositorio:** [altamirandapatricioseb/Challenge_Tecnico-AranguriApps](https://github.com/altamirandapatricioseb/Challenge_Tecnico-AranguriApps)
+**Demo en producción:** [challenge-tecnico-aranguri-apps.vercel.app](https://challenge-tecnico-aranguri-apps.vercel.app/)
+
 
 ---
 

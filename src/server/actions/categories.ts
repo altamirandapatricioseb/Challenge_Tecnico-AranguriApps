@@ -4,15 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth'
 import { categorySchema } from '@/lib/validations/category'
-import type { ActionResult, Category } from '@/types'
+import type { ActionResult, Category, CategoryWithCount } from '@/types'
 
-// Lista las categorias activas ordenadas por nombre
-export async function getCategories(): Promise<Category[]> {
+// Lista las categorias activas con su cantidad de productos activos asociados,
+// ordenadas por nombre. Lee de la vista categories_with_counts (el conteo lo hace la DB).
+export async function getCategories(): Promise<CategoryWithCount[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
-    .from('categories')
+    .from('categories_with_counts')
     .select('*')
-    .eq('is_active', true)
     .order('name')
 
   if (error) {

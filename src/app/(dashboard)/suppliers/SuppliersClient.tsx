@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { createSupplier, updateSupplier, deleteSupplier } from '@/server/actions/suppliers'
 import type { SupplierFormValues } from '@/lib/validations/supplier'
-import { Truck, Pencil, Trash2 } from 'lucide-react'
-import type { Supplier } from '@/types'
+import { Truck, Pencil, Trash2, Package } from 'lucide-react'
+import type { SupplierWithCount } from '@/types'
 
 interface SuppliersClientProps {
-  suppliers: Supplier[]
+  suppliers: SupplierWithCount[]
   canWrite: boolean
   canDelete: boolean
 }
@@ -26,8 +26,8 @@ interface SuppliersClientProps {
 export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [editing, setEditing] = useState<Supplier | null>(null)
-  const [deleting, setDeleting] = useState<Supplier | null>(null)
+  const [editing, setEditing] = useState<SupplierWithCount | null>(null)
+  const [deleting, setDeleting] = useState<SupplierWithCount | null>(null)
 
   async function handleCreate(values: SupplierFormValues, close: () => void) {
     startTransition(async () => {
@@ -45,7 +45,7 @@ export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersCli
   async function handleUpdate(values: SupplierFormValues) {
     if (!editing) return
     startTransition(async () => {
-      const result = await updateSupplier(editing.id, values)
+      const result = await updateSupplier(editing.id ?? '', values)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -59,7 +59,7 @@ export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersCli
   function handleDelete() {
     if (!deleting) return
     startTransition(async () => {
-      const result = await deleteSupplier(deleting.id)
+      const result = await deleteSupplier(deleting.id ?? '')
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -70,11 +70,24 @@ export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersCli
     })
   }
 
-  const columns: Column<Supplier>[] = [
-    { key: 'name', header: 'Nombre', sortValue: (s) => s.name, cell: (s) => <span className="font-medium text-slate-900">{s.name}</span> },
+  const columns: Column<SupplierWithCount>[] = [
+    { key: 'name', header: 'Nombre', sortValue: (s) => s.name ?? '', cell: (s) => <span className="font-medium text-slate-900">{s.name}</span> },
     { key: 'contact', header: 'Contacto', sortValue: (s) => s.contact_name ?? '', cell: (s) => <span className="text-slate-600">{s.contact_name || '—'}</span> },
     { key: 'email', header: 'Email', sortValue: (s) => s.email ?? '', cell: (s) => <span className="font-data text-slate-600">{s.email || '—'}</span> },
     { key: 'phone', header: 'Teléfono', sortValue: (s) => s.phone ?? '', cell: (s) => <span className="font-data text-slate-600">{s.phone || '—'}</span> },
+    {
+      key: 'products', header: 'Productos', align: 'right',
+      sortValue: (s) => s.product_count ?? 0,
+      cell: (s) => {
+        const n = s.product_count ?? 0
+        return (
+          <span className={`inline-flex items-center gap-1.5 font-data ${n === 0 ? 'text-slate-400' : 'text-slate-700'}`}>
+            <Package className="h-3.5 w-3.5" />
+            {n}
+          </span>
+        )
+      },
+    },
   ]
 
   if (canWrite || canDelete) {
@@ -116,7 +129,7 @@ export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersCli
       <DataTable
         columns={columns}
         data={suppliers}
-        rowKey={(s) => s.id}
+        rowKey={(s) => s.id ?? ""}
         pageSize={10}
         emptyIcon={Truck}
         emptyTitle="Sin proveedores"
@@ -134,7 +147,7 @@ export function SuppliersClient({ suppliers, canWrite, canDelete }: SuppliersCli
               {editing && (
                 <SupplierForm
                   defaultValues={{
-                    name: editing.name,
+                    name: editing.name ?? '',
                     contact_name: editing.contact_name ?? '',
                     email: editing.email ?? '',
                     phone: editing.phone ?? '',

@@ -29,6 +29,8 @@ export type MovementWithProduct  = Database['public']['Views']['movements_with_p
 export type MovementDailySummary = Database['public']['Views']['movement_daily_summary']['Row']
 export type CategoryStockSummary = Database['public']['Views']['category_stock_summary']['Row']
 export type AdminUserOverview    = Database['public']['Views']['admin_users_overview']['Row']
+export type CategoryWithCount    = Database['public']['Views']['categories_with_counts']['Row']
+export type SupplierWithCount    = Database['public']['Views']['suppliers_with_counts']['Row']
 
 // Domain types
 
@@ -47,3 +49,4 @@ export type DashboardKPIs = {
 export type ActionResult<T = null> =
   | { data: T;    error: null }
   | { data: null; error: string }
+  

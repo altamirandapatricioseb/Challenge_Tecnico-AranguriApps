@@ -4,15 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth'
 import { supplierSchema } from '@/lib/validations/supplier'
-import type { ActionResult, Supplier } from '@/types'
+import type { ActionResult, Supplier, SupplierWithCount } from '@/types'
 
-// Lista proveedores activos ordenados por nombre
-export async function getSuppliers(): Promise<Supplier[]> {
+// Lista proveedores activos con su cantidad de productos activos asociados,
+// ordenados por nombre. Lee de la vista suppliers_with_counts (el conteo lo hace la DB).
+export async function getSuppliers(): Promise<SupplierWithCount[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
-    .from('suppliers')
+    .from('suppliers_with_counts')
     .select('*')
-    .eq('is_active', true)
     .order('name')
 
   if (error) {

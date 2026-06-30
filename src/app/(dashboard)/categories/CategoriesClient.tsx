@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { createCategory, updateCategory, deleteCategory } from '@/server/actions/categories'
 import type { CategoryFormValues } from '@/lib/validations/category'
-import { Tag, Pencil, Trash2 } from 'lucide-react'
-import type { Category } from '@/types'
+import { Tag, Pencil, Trash2, Package } from 'lucide-react'
+import type { CategoryWithCount } from '@/types'
 
 interface CategoriesClientProps {
-  categories: Category[]
+  categories: CategoryWithCount[]
   canWrite: boolean   // manager o admin: crear y editar
   canDelete: boolean  // solo admin: eliminar
 }
@@ -26,8 +26,8 @@ interface CategoriesClientProps {
 export function CategoriesClient({ categories, canWrite, canDelete }: CategoriesClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [editing, setEditing] = useState<Category | null>(null)
-  const [deleting, setDeleting] = useState<Category | null>(null)
+  const [editing, setEditing] = useState<CategoryWithCount | null>(null)
+  const [deleting, setDeleting] = useState<CategoryWithCount | null>(null)
 
   async function handleCreate(values: CategoryFormValues, close: () => void) {
     startTransition(async () => {
@@ -45,7 +45,7 @@ export function CategoriesClient({ categories, canWrite, canDelete }: Categories
   async function handleUpdate(values: CategoryFormValues) {
     if (!editing) return
     startTransition(async () => {
-      const result = await updateCategory(editing.id, values)
+      const result = await updateCategory(editing.id ?? '', values)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -59,7 +59,7 @@ export function CategoriesClient({ categories, canWrite, canDelete }: Categories
   function handleDelete() {
     if (!deleting) return
     startTransition(async () => {
-      const result = await deleteCategory(deleting.id)
+      const result = await deleteCategory(deleting.id ?? '')
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -70,18 +70,31 @@ export function CategoriesClient({ categories, canWrite, canDelete }: Categories
     })
   }
 
-  const columns: Column<Category>[] = [
+  const columns: Column<CategoryWithCount>[] = [
     {
-      key: 'name', header: 'Nombre', sortValue: (c) => c.name,
+      key: 'name', header: 'Nombre', sortValue: (c) => c.name ?? '',
       cell: (c) => (
         <span className="inline-flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: c.color }} />
+          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: c.color ?? '#94a3b8' }} />
           <span className="font-medium text-slate-900">{c.name}</span>
         </span>
       ),
     },
     { key: 'description', header: 'Descripción', sortValue: (c) => c.description ?? '', cell: (c) => <span className="text-slate-600">{c.description || '—'}</span> },
-    { key: 'color', header: 'Color', sortValue: (c) => c.color, cell: (c) => <span className="font-data text-slate-500">{c.color}</span> },
+    {
+      key: 'products', header: 'Productos', align: 'right',
+      sortValue: (c) => c.product_count ?? 0,
+      cell: (c) => {
+        const n = c.product_count ?? 0
+        return (
+          <span className={`inline-flex items-center gap-1.5 font-data ${n === 0 ? 'text-slate-400' : 'text-slate-700'}`}>
+            <Package className="h-3.5 w-3.5" />
+            {n}
+          </span>
+        )
+      },
+    },
+    { key: 'color', header: 'Color', sortValue: (c) => c.color ?? '', cell: (c) => <span className="font-data text-slate-500">{c.color}</span> },
   ]
 
   // Acciones segun permisos: editar (canWrite) y eliminar (canDelete)
@@ -124,7 +137,7 @@ export function CategoriesClient({ categories, canWrite, canDelete }: Categories
       <DataTable
         columns={columns}
         data={categories}
-        rowKey={(c) => c.id}
+        rowKey={(c) => c.id ?? ""}
         pageSize={10}
         emptyIcon={Tag}
         emptyTitle="Sin categorías"
@@ -142,9 +155,9 @@ export function CategoriesClient({ categories, canWrite, canDelete }: Categories
               {editing && (
                 <CategoryForm
                   defaultValues={{
-                    name: editing.name,
+                    name: editing.name ?? '',
                     description: editing.description ?? '',
-                    color: editing.color,
+                    color: editing.color ?? '#6366f1',
                   }}
                   onSubmit={handleUpdate}
                   isLoading={isPending}
