@@ -80,7 +80,7 @@ La elección del stack no fue por moda, sino por una combinación deliberada de 
 - **Movimientos de stock** — entradas, salidas y ajustes, con validación de stock suficiente y actualización automática del inventario vía triggers de base de datos.
 - **Proveedores y categorías** — gestión independiente, con color identificatorio para categorías.
 - **Dashboard** — KPIs en tiempo real (productos activos, stock crítico, movimientos, valor del inventario), gráficos de evolución y distribución, y tablas de resumen.
-- **Gestión de usuarios** — panel exclusivo de admin para asignar roles.
+- **Gestión de usuarios** — panel exclusivo de admin para asignar roles y eliminar usuarios (baja lógica: el usuario eliminado pierde el acceso y se oculta, pero su historial se conserva).
 - **Exportación a Excel** — reportes de movimientos con formato, respetando filtros.
 - **Baja lógica con reactivación** — eliminar no destruye datos; recrear un registro dado de baja lo reactiva en vez de duplicar.
 
@@ -97,7 +97,7 @@ Decisiones de diseño destacadas:
 - **Integridad de stock a nivel DB** — el stock no se calcula en el frontend: un trigger de PostgreSQL (`handle_stock_movement`) actualiza `current_stock` ante cada movimiento, garantizando consistencia aunque se escriba desde cualquier cliente.
 - **Movimientos inmutables** — `stock_movements` funciona como un libro contable: un trigger (`block_movement_mutation`) impide editar o borrar un movimiento ya registrado, preservando el historial de auditoría.
 - **Seguridad en la base** — Row Level Security (RLS) con políticas por rol: la base de datos misma valida los permisos, no solo la aplicación.
-- **Baja lógica** — las tablas con `is_active` permiten "eliminar" sin perder datos, con reactivación case-insensitive al recrear.
+- **Baja lógica** — las tablas con `is_active` (productos, proveedores, categorías y usuarios) permiten "eliminar" sin perder datos. En productos, proveedores y categorías hay reactivación case-insensitive al recrear; en usuarios la baja es definitiva (un usuario eliminado no puede volver a iniciar sesión, validado en el login y en el middleware).
 
 ### Organización del código
 

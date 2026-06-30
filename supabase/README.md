@@ -17,6 +17,7 @@ Supabase, uno por uno:
 | 004 | `004_views.sql` | Vistas para consultas frecuentes (productos, movimientos, KPIs, etc.). |
 | 005 | `005_admin_users_view.sql` | Vista de administración de usuarios + función `get_user_email()`. |
 | 006 | `006_seed.sql` | Datos de ejemplo (categorías, proveedores, productos y movimientos). |
+| 007 | `007_users_soft_delete.sql` | Soft delete de usuarios: columna `is_active` en `profiles` y vista de administración filtrada. |
 
 > El orden importa: cada script asume que los anteriores ya se ejecutaron.
 > Por ejemplo, las vistas (004) dependen de las tablas (001), y el seed (006)
@@ -48,7 +49,10 @@ trigger de la migración 002).
   stock suficiente en las salidas.
 - **Movimientos inmutables**: `stock_movements` es un log de auditoría. Los triggers
   `block_movement_mutation` impiden UPDATE y DELETE sobre esa tabla.
-- **Soft delete**: `products`, `suppliers` y `categories` usan `is_active` para baja
-  lógica. Las vistas ocultan las referencias inactivas sin perder los ids.
+- **Soft delete**: `products`, `suppliers`, `categories` y `profiles` (usuarios) usan
+  `is_active` para baja lógica. Las vistas ocultan las referencias inactivas sin perder
+  los ids. Un usuario dado de baja no puede iniciar sesión ni figura en el panel, pero su
+  historial de movimientos (`created_by`) se conserva.
 - **Seguridad en capas**: las políticas RLS validan los permisos en la base de datos,
   no solo en la aplicación (defensa en profundidad).
+  
