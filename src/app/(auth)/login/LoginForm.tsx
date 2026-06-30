@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -12,10 +12,13 @@ import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // Si el middleware expulso a un usuario eliminado, llega con ?deactivated=1
+  const wasDeactivated = searchParams.get('deactivated') === '1'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(wasDeactivated ? 'Este usuario fue eliminado.' : null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
@@ -23,13 +26,31 @@ export function LoginForm() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       // Mensaje genérico: no revelar si el email existe (buena práctica de seguridad).
       setError('Email o contraseña incorrectos.')
       setLoading(false)
       return
+    }
+
+    // El usuario se autentico bien. Antes de dejarlo entrar, verificamos que no
+    // haya sido eliminado (soft delete): si su perfil esta inactivo, cerramos la
+    // sesion y no lo dejamos pasar.
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_active')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (profile && profile.is_active === false) {
+        await supabase.auth.signOut()
+        setError('Este usuario fue eliminado.')
+        setLoading(false)
+        return
+      }
     }
 
     // refresh() fuerza al middleware a re-evaluar la sesión y redirigir al dashboard.

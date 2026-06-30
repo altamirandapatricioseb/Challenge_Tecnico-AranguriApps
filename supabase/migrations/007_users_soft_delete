@@ -1,0 +1,32 @@
+-- ============================================================
+-- MIGRACION — Eliminacion de usuarios por soft delete (sin reactivacion)
+-- ============================================================
+-- Agrega is_active a profiles para "eliminar" usuarios sin borrarlos
+-- fisicamente de la base.
+--
+-- POR QUE SOFT DELETE:
+--   1. Integridad referencial: stock_movements.created_by referencia al usuario que registro cada movimiento. Un borrado fisico obligaria a romper ese vinculo y se perderia la trazabilidad de quien hizo que
+--   2. Seguridad: el borrado real de auth.users exige la service_role key, que bypassea toda la RLS.
+--   3. Coherencia: products, suppliers y categories ya usan is_active.
+-- ============================================================
+
+-- 1. Columna is_active en profiles
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- 2. Vista de administracion: incluye is_active y solo lista usuarios activos. Los eliminados (is_active = false) quedan ocultos del panel, sin opcion de reactivacion 
+DROP VIEW IF EXISTS admin_users_overview;
+
+CREATE OR REPLACE VIEW admin_users_overview
+WITH (security_invoker = true)
+AS
+SELECT
+  p.id,
+  get_user_email(p.id) AS email,
+  p.full_name,
+  p.role,
+  p.is_active,
+  p.created_at
+FROM profiles p
+WHERE p.is_active = TRUE
+ORDER BY p.created_at DESC;

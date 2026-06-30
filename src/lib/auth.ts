@@ -33,6 +33,15 @@ export async function getProfile(): Promise<Profile | null> {
   return data
 }
 
+// Indica si el usuario actual esta activo. Un usuario desactivado (soft delete)
+// no debe poder usar el sistema. Si no hay perfil aun, lo tratamos como activo
+// para no romper el caso del perfil recien creado (el trigger puede no haber terminado).
+export async function isCurrentUserActive(): Promise<boolean> {
+  const profile = await getProfile()
+  if (!profile) return true // sin perfil todavia: no lo bloqueamos por esto
+  return profile.is_active !== false
+}
+
 // Devuelve el rol del usuario actual, con 'viewer' como default seguro.
 // El cast es seguro: la columna role en la DB solo admite los valores de UserRole
 export async function getUserRole(): Promise<UserRole> {
