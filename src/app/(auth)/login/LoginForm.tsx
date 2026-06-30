@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -10,15 +10,18 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 
-export function LoginForm() {
+// deactivated: lo pasa la pagina (Server Component) cuando el middleware expulso
+// a un usuario eliminado y redirigio con ?deactivated=1
+interface LoginFormProps {
+  deactivated?: boolean
+}
+
+export function LoginForm({ deactivated = false }: LoginFormProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  // Si el middleware expulso a un usuario eliminado, llega con ?deactivated=1
-  const wasDeactivated = searchParams.get('deactivated') === '1'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(wasDeactivated ? 'Este usuario fue eliminado.' : null)
+  const [error, setError] = useState<string | null>(deactivated ? 'Este usuario fue eliminado.' : null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
