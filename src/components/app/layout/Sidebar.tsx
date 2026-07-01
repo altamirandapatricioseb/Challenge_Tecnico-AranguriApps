@@ -70,28 +70,34 @@ export function SidebarContent({ user, onNavigate, onLogout }: {
               href={item.href}
               onClick={onNavigate}
               aria-current={active ? 'page' : undefined}
+              // group/nav permite animar el icono y el indicador segun el estado del item.
+              // Todo con transiciones CSS (no JS) para que el cambio sea suave.
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              )}
-              style={
+                'group/nav relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ease-out',
                 active
-                  ? { backgroundColor: '#eab308', color: '#0c0d0f' }
-                  : { color: '#9a9da4' }
-              }
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.backgroundColor = '#15171c'
-                  e.currentTarget.style.color = '#f1efe9'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = '#9a9da4'
-                }
-              }}
+                  ? 'bg-amber-500 text-slate-900 shadow-sm shadow-amber-500/30'
+                  : 'text-slate-400 hover:bg-[#15171c] hover:text-slate-100 hover:pl-4',
+                'motion-reduce:transition-none motion-reduce:hover:pl-3',
+              )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              {/* Indicador deslizante: barrita a la izquierda que crece cuando el item
+                  esta activo o al pasar el mouse. Al cambiar de seccion, la sensacion
+                  es que el acento "se desliza" entre items */}
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute left-0 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-r bg-amber-400 transition-all duration-300 ease-out',
+                  active ? 'h-6' : 'group-hover/nav:h-4',
+                  'motion-reduce:transition-none',
+                )}
+              />
+              <Icon
+                className={cn(
+                  'h-4 w-4 shrink-0 transition-transform duration-200',
+                  !active && 'group-hover/nav:scale-110',
+                  'motion-reduce:transition-none motion-reduce:group-hover/nav:scale-100',
+                )}
+              />
               {item.label}
             </Link>
           )
@@ -101,10 +107,8 @@ export function SidebarContent({ user, onNavigate, onLogout }: {
       <div className="p-3" style={{ borderTop: '1px solid #1d2026' }}>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors focus-visible:ring-2"
+            className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors duration-200 hover:bg-[#15171c] focus-visible:ring-2"
             style={{ color: '#f1efe9' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#15171c' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
           >
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs" style={{ backgroundColor: '#eab308', color: '#0c0d0f' }}>{initials}</AvatarFallback>
