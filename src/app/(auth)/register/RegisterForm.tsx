@@ -10,6 +10,10 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
 export function RegisterForm() {
   const router = useRouter()
   const [fullName, setFullName] = useState('')
@@ -24,6 +28,10 @@ export function RegisterForm() {
   async function handleSubmit() {
     setError(null)
 
+    if (!isValidEmail(email)) {
+      setError('El email no tiene un formato válido. Revisá que incluya @ y un dominio.')
+      return
+    }
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.')
       return
@@ -44,11 +52,20 @@ export function RegisterForm() {
     })
 
     if (error) {
-      setError(
-        error.message.includes('already registered')
-          ? 'Ya existe una cuenta con ese email.'
-          : 'No se pudo crear la cuenta. Intentá de nuevo.',
-      )
+      const msg = error.message.toLowerCase()
+      let friendly = 'No se pudo crear la cuenta. Intentá de nuevo.'
+
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        friendly = 'Ya existe una cuenta con ese email.'
+      } else if (msg.includes('invalid') && msg.includes('email')) {
+        friendly = 'El email no es válido. Revisá que esté bien escrito.'
+      } else if (msg.includes('password')) {
+        friendly = 'La contraseña no cumple los requisitos mínimos.'
+      } else if (msg.includes('rate limit') || msg.includes('too many')) {
+        friendly = 'Demasiados intentos. Esperá un momento y probá de nuevo.'
+      }
+
+      setError(friendly)
       setLoading(false)
       return
     }
