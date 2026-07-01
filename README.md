@@ -4,7 +4,6 @@
 
 **Demo en producción:** [challenge-tecnico-aranguri-apps.vercel.app](https://challenge-tecnico-aranguri-apps.vercel.app/)
 
-
 ---
 
 ## Índice
@@ -103,13 +102,19 @@ Decisiones de diseño destacadas:
 
 La organización sigue un criterio de **separación de responsabilidades y modularidad por entidad**, pensado para que el sistema escale y para mantener autonomía en ambos extremos del stack sin que una capa contamine a la otra:
 
-- SQL modularizado por responsabilidad (`schema`, trigger de creación de perfil, `rls`, vistas, vista de administración de usuarios y `seed`), numerado por orden de ejecución en `supabase/migrations/`, en vez de un dump único, de modo que cada archivo tenga una única razón para cambiar.
+- SQL consolidado en un único `schema.sql` que levanta la base completa desde cero, organizado en secciones comentadas (funciones, tablas, RLS, vistas, seed) para que se lea de corrido y sea simple de ejecutar.
 - Server Actions separados por entidad, manteniendo el código cohesionado y fácil de ubicar.
 - Clientes de Supabase divididos (browser / servidor) para soportar SSR correctamente.
 - Validaciones con Zod compartidas entre cliente y servidor, evitando duplicar reglas de negocio.
 - **Defensa en profundidad:** las validaciones críticas (como el stock) se verifican en tres niveles —el formulario, la Server Action y el trigger de la base— de manera que ninguna capa dependa ciegamente de la confiabilidad de la anterior.
 
 Este enfoque modular hace que agregar una nueva entidad o ampliar el dominio sea una extensión predecible del patrón existente, no una reescritura.
+
+### Decisiones de alcance
+
+Algunas decisiones fueron conscientes sobre qué dejar dentro y fuera del alcance, priorizando un núcleo sólido:
+
+- **Confirmación de email desactivada a propósito.** El registro valida el *formato* del email, pero la *verificación de propiedad* (confirmar la casilla vía link) está deshabilitada de forma deliberada para que la demo sea evaluable sin fricción: quien prueba el sistema puede registrarse y entrar al instante, sin depender de un correo. Es una función que Supabase Auth ya provee de forma nativa y se activa con un solo cambio de configuración en un entorno productivo; no requiere reescribir código. La decisión es de configuración de entorno, no de arquitectura.
 
 ---
 
@@ -130,9 +135,9 @@ cp .env.example .env.local
 #   NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # 4. Aplicar el schema en Supabase
-# Los scripts SQL están en la subcarpeta supabase/migrations/.
-# Seguí el README de la carpeta supabase/, que indica el orden
-# de ejecución.
+# Todo el esquema está consolidado en supabase/migrations/schema.sql.
+# Copiá su contenido en el SQL Editor de Supabase y ejecutalo una vez.
+# El detalle está en supabase/README.md
 
 # 5. Levantar el servidor de desarrollo
 npm run dev

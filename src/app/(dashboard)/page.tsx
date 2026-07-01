@@ -15,7 +15,7 @@ import {
   getStockAlerts,
 } from '@/server/actions/dashboard'
 
-// El dashboard siempre trae datos frescos
+// El dashboard siempre trae datos frescos: nada de cache estatico.
 // Asi los KPIs, el grafico y las tablas reflejan el estado real en cada visita.
 export const dynamic = 'force-dynamic'
 
@@ -50,10 +50,10 @@ export default async function DashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Productos activos" value={kpis.total_products} icon={Package} hint="Total en catálogo" />
-        <KpiCard title="Stock crítico/bajo" value={kpis.low_stock_count} icon={AlertTriangle} hint="En o bajo el mínimo" />
-        <KpiCard title="Movimientos hoy" value={kpis.total_movements_today} icon={ArrowLeftRight} hint="Registrados hoy" />
-        <KpiCard title="Valor de stock" value={formatCurrency(kpis.stock_value)} icon={DollarSign} hint="Inventario valorizado" />
+        <KpiCard index={0} title="Productos activos" value={kpis.total_products} icon={Package} hint="Total en catálogo" />
+        <KpiCard index={1} title="Stock crítico/bajo" value={kpis.low_stock_count} icon={AlertTriangle} hint="En o bajo el mínimo" />
+        <KpiCard index={2} title="Movimientos hoy" value={kpis.total_movements_today} icon={ArrowLeftRight} hint="Registrados hoy" />
+        <KpiCard index={3} title="Valor de stock" value={formatCurrency(kpis.stock_value)} icon={DollarSign} hint="Inventario valorizado" />
       </div>
 
       {/* Charts: ambas cards son clickeables y navegan a su seccion */}

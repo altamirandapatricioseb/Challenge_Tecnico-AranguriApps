@@ -10,9 +10,10 @@ interface KpiCardProps {
   delta?: number   // variación % vs período anterior (verde si >=0, rojo si <0)
   hint?: string    // texto alternativo 
   isLoading?: boolean
+  index?: number   // posicion en la grilla, para escalonar la animacion de entrada
 }
 
-export function KpiCard({ title, value, icon: Icon, delta, hint, isLoading = false }: KpiCardProps) {
+export function KpiCard({ title, value, icon: Icon, delta, hint, isLoading = false, index = 0 }: KpiCardProps) {
   if (isLoading) {
     return (
       <Card className="p-5">
@@ -30,10 +31,14 @@ export function KpiCard({ title, value, icon: Icon, delta, hint, isLoading = fal
   const positive = (delta ?? 0) >= 0
 
   return (
-    <Card className="p-5" data-testid="kpi-card">
+    <Card
+      data-testid="kpi-card"
+      className="group/kpi animate-kpi-in cursor-default p-5 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 hover:ring-amber-500/40 motion-reduce:animate-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
       <div className="flex items-start justify-between">
         <p className="text-sm font-medium text-slate-500">{title}</p>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition-transform duration-200 group-hover/kpi:scale-110 motion-reduce:transition-none motion-reduce:group-hover/kpi:scale-100">
           <Icon className="h-5 w-5" />
         </div>
       </div>

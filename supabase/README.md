@@ -1,27 +1,28 @@
 # Base de datos — InventFlow
 
-Scripts SQL para levantar la base de datos completa en Supabase (PostgreSQL).
-Todo lo necesario está en la carpeta [`migrations/`](./migrations), numerado en
-orden de ejecución.
+Todo el esquema de la base de datos está consolidado en un único archivo:
+[`migrations/schema.sql`](./migrations/schema.sql).
 
 ## Cómo levantar la base desde cero
 
-Ejecutar los scripts de `migrations/` **en orden numérico** en el SQL Editor de
-Supabase, uno por uno:
+1. Abrí el **SQL Editor** de Supabase en tu proyecto.
+2. Copiá el contenido completo de `migrations/schema.sql` y ejecutalo.
 
-| # | Archivo | Qué hace |
-|---|---------|----------|
-| 001 | `001_schema.sql` | Tablas, índices y triggers (stock, inmutabilidad de movimientos, `updated_at`). |
-| 002 | `002_auth_trigger.sql` | Trigger que crea el perfil automáticamente al registrarse un usuario. |
-| 003 | `003_rls.sql` | Row Level Security: función `get_my_role()` y políticas por rol. |
-| 004 | `004_views.sql` | Vistas para consultas frecuentes (productos, movimientos, KPIs, etc.). |
-| 005 | `005_admin_users_view.sql` | Vista de administración de usuarios + función `get_user_email()`. |
-| 006 | `006_seed.sql` | Datos de ejemplo (categorías, proveedores, productos y movimientos). |
-| 007 | `007_users_soft_delete.sql` | Soft delete de usuarios: columna `is_active` en `profiles` y vista de administración filtrada. |
+Eso es todo. El archivo crea, en orden, las funciones, tablas, triggers,
+políticas de seguridad, vistas y datos de ejemplo. Está pensado para correr de
+una sola vez sobre un proyecto nuevo.
 
-> El orden importa: cada script asume que los anteriores ya se ejecutaron.
-> Por ejemplo, las vistas (004) dependen de las tablas (001), y el seed (006)
-> dispara los triggers de stock definidos en 001.
+El script está dividido en secciones comentadas para facilitar su lectura:
+
+| Sección | Contenido |
+|---------|-----------|
+| 1 y 2 | Funciones utilitarias, tablas, índices y triggers de stock. |
+| 3 | Trigger que crea el perfil automáticamente al registrarse un usuario. |
+| 4 | Row Level Security: función `get_my_role()` y políticas por rol. |
+| 5 | Vistas de consulta (productos, stock bajo, movimientos, resúmenes). |
+| 6 | Vista de administración de usuarios + función `get_user_email()`. |
+| 7 | Vistas de conteo de productos por categoría y proveedor. |
+| 8 | Datos de ejemplo (categorías, proveedores, productos y movimientos). |
 
 ## Usuarios de prueba
 
@@ -40,7 +41,7 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@email.com');
 ```
 
 El usuario que se registra queda con rol `viewer` por defecto (lo asigna el
-trigger de la migración 002).
+trigger de creación de perfil).
 
 ## Notas de diseño
 
