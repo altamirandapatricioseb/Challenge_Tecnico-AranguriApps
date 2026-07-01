@@ -167,14 +167,13 @@ export function DataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageData.map((row) => (
+            {pageData.map((row, i) => (
               <TableRow
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                // Transicion suave de fondo al pasar el mouse; si la fila es clickeable,
-                // ademas resalta con el color de acento y se "ilumina" el borde izquierdo
+                style={{ animationDelay: `${Math.min(i * 35, 350)}ms` }}
                 className={cn(
-                  'transition-colors duration-150 hover:bg-slate-50/80 motion-reduce:transition-none',
+                  'animate-fade-in-up transition-colors duration-150 hover:bg-slate-50/80 motion-reduce:animate-none motion-reduce:transition-none',
                   onRowClick && 'cursor-pointer hover:bg-amber-50/50 hover:shadow-[inset_3px_0_0_0] hover:shadow-amber-400',
                 )}
               >
